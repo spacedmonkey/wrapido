@@ -27,7 +27,8 @@
 	},
 	"files": [
 		"dist",
-		"AGENTS.md"
+		"AGENTS.md",
+		"skills"
 	],
 	"type": "module",
 	"bin": {
