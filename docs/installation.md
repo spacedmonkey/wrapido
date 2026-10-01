@@ -84,6 +84,10 @@ npm run wrapido -- <namespace> <route> [<verb>] [<id>] [--flag=value...] --url=<
 
 See [CONTRIBUTING.md](https://github.com/spacedmonkey/wrapido/blob/main/CONTRIBUTING.md) for the full contributor workflow.
 
+## Use it with Claude Code
+
+Once `wrapido` is on your `PATH`, you can install the `wrapido` skill so Claude Code knows how to use it. See [Claude Code skill](claude-code.md).
+
 ## Note on npm registry publishing
 
 `wrapido` isn't published to the npm registry yet. Once it is, global installation will collapse to a single command:

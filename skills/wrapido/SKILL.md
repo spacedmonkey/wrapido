@@ -9,7 +9,7 @@ description: Use the wrapido CLI to read and change content on any WordPress sit
 
 ## Setup checks
 
-- Run `wrapido --help` once to confirm it is installed. If not: `npm install -g wrapido`, or from a clone `npm install && npm run build` and run `./dist/cli.js`.
+- Run `wrapido --help` once to confirm it is installed. wrapido is not on npm yet. If missing, install from a clone: `git clone https://github.com/spacedmonkey/wrapido.git && cd wrapido && npm install && npm run build && npm install -g .` (or run `./dist/cli.js` directly).
 - Agent mode (compact JSON, no spinners or colour, JSON errors on stderr) turns on automatically inside Claude Code. If output looks like a table, set `WRAPIDO_AGENT=1` or pass `--format=json --quiet --no-color`. `--debug` shows whether it is on.
 - The site comes from `--url=<site>`, a `wrapido.yml` (`url: https://example.com`) in the working directory, or a saved default. Run `wrapido config get` to see what is in effect and where it came from.
 

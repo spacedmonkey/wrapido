@@ -21,6 +21,7 @@ nav:
   - Meta commands: meta-commands.md
   - Uploading files: uploading-files.md
   - Agent mode: agent-mode.md
+  - Claude Code skill: claude-code.md
   - Examples: examples.md
   - Tags: tags.md
   - Contributing: contributing.md

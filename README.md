@@ -85,6 +85,15 @@ Any other `--name=value` (or bare `--name`, treated as `--name=true`) is passed 
 
 Auto-detected inside Claude Code, OpenAI Codex, GitHub Copilot's agent tooling, Cline and Cursor (or set `WRAPIDO_AGENT=1` by hand): JSON by default (compact, `_links`/`_embedded` stripped), no colour or spinners, JSON errors, and warnings for unknown flags. Nothing changes for interactive use. See [docs/agent-mode.md](docs/agent-mode.md) and [AGENTS.md](AGENTS.md) (written for the agent itself).
 
+For Claude Code there is also a `wrapido` skill (`skills/wrapido/`) that teaches Claude the workflow, safety rules and gotchas. Install the CLI (above), then:
+
+```sh
+claude plugin marketplace add spacedmonkey/wrapido
+claude plugin install wrapido@wrapido
+```
+
+Export `WP_USERNAME`/`WP_PASSWORD` (an Application Password) and ask Claude to work with your site, or run `/wrapido`. See [Claude Code skill](docs/claude-code.md) for the copy-the-folder alternative, permissions and examples.
+
 ## Authentication
 
 Use a WordPress core **Application Password** (Users → Profile → Application Passwords, built into WordPress since 5.6), not your real account password:

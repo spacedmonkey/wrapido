@@ -73,7 +73,7 @@ Tips for fewer calls:
 -   `--format=raw` is Node-inspect text, not JSON. `auth ... login` needs a browser (humans only).
 -   Nested routes are separate words: `wrapido wp/v2 posts revisions get <post-id>`.
 -   `types`, `taxonomies`, `statuses` list one row per entry, so `--fields=slug,name` works.
--   Uploads: the flag is the endpoint's own parameter name (`--file=@/path/img.png` for core media).
+-   Uploads: the flag is the endpoint's own parameter name (`--file=/path/img.png` (a path or `http(s)://` URL) for core media).
 -   `--debug` logs every HTTP request (credentials redacted) to stderr.
 -   HTTPS certificates are **not verified**; don't use real credentials on untrusted networks.
 

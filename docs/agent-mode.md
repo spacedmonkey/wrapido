@@ -86,29 +86,4 @@ and export `WRAPIDO_AGENT=1` in the agent's environment. Point the agent at [AGE
 
 ## Claude Code skill
 
-This repository is also a Claude Code plugin that ships a `wrapido` skill (`skills/wrapido/SKILL.md`), so Claude knows the workflow, safety rules and gotchas without being told each time:
-
-```sh
-claude plugin marketplace add spacedmonkey/wrapido
-claude plugin install wrapido@wrapido
-```
-
-Or copy `skills/wrapido/` to `~/.claude/skills/wrapido/` (all projects) or `.claude/skills/wrapido/` (one project).
-
-Plugins cannot grant permissions, so to stop Claude prompting on every read, add this to `.claude/settings.json` (or `~/.claude/settings.json`). Writes (`create`, `update`, `delete`, `generate`, `meta`) stay on a prompt:
-
-```json
-{
-	"permissions": {
-		"allow": [
-			"Bash(wrapido help:*)",
-			"Bash(wrapido config get:*)",
-			"Bash(wrapido * list:*)",
-			"Bash(wrapido * get:*)",
-			"Bash(wrapido * exists:*)"
-		]
-	}
-}
-```
-
-Patterns match the command text, so a read with flags before the verb (e.g. `wrapido --url=... wp/v2 posts list`) will still prompt.
+For Claude Code there is also a ready-made skill and plugin that teaches Claude the workflow, safety rules and gotchas. See [Claude Code skill](claude-code.md) for installing and using it.
