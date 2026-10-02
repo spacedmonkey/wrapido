@@ -51,6 +51,7 @@ import { printOutput } from './core/pager.js';
 import type { PagerFlags } from './core/pager.js';
 import { setUserTimeout } from './core/timeout.js';
 import { disableTlsVerification } from './core/tls.js';
+import { releaseProcessWarnings } from './core/warnings.js';
 import type {
 	AuthSource,
 	Context,
@@ -556,6 +557,9 @@ run "wrapido <namespace> <route>" to see which ones a given route supports.
 		setColorEnabled( options.color && colorByDefault() );
 		try {
 			options = applyFileConfig( rawOptions );
+			// --quiet (flag or config file) is known now: print or drop the
+			// Node warnings held since startup (see core/warnings.ts).
+			releaseProcessWarnings( Boolean( options.quiet ) );
 			setColorEnabled( options.color && colorByDefault() );
 			setTruncateLength( parseTruncateLength( options.truncateLength ) );
 			setDebugOutput( Boolean( options.debug ) );
@@ -647,6 +651,8 @@ run "wrapido <namespace> <route>" to see which ones a given route supports.
 			await printOutput( output, flags );
 			process.exitCode = exitCode;
 		} catch ( error ) {
+			// No-op if already released above; covers a bad config file.
+			releaseProcessWarnings( Boolean( options.quiet ) );
 			console.error( errorText( error, options.format ) );
 			if (
 				options.debug &&

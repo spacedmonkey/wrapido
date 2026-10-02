@@ -67,7 +67,7 @@
 		"vitest": "^5.0.0"
 	},
 	"scripts": {
-		"wrapido": "tsx src/cli.ts",
+		"wrapido": "tsx src/bin.ts",
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"test": "npm run test:unit && npm run test:integration",
