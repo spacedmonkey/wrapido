@@ -10,9 +10,10 @@ export default defineConfig( {
 	entry: { cli: 'src/bin.ts' },
 	format: [ 'esm' ],
 	target: 'node20',
-	// Bundled so esbuild inlines its `import ... with {type: 'json'}`; left
-	// external, Node 20 prints "ExperimentalWarning: Importing JSON modules".
-	noExternal: [ 'cli-spinners' ],
+	// ora's cli-spinners does `import ... with {type: 'json'}`, which Node 20
+	// reports as "ExperimentalWarning: Importing JSON modules". Bundling both
+	// (ora alone would still import cli-spinners at runtime) inlines the JSON.
+	noExternal: [ 'ora', 'cli-spinners' ],
 	clean: true,
 	dts: false,
 	// Only emit a sourcemap when collecting coverage (`npm run coverage`) —
