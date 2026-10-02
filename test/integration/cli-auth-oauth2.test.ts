@@ -29,7 +29,7 @@ afterAll( async () => {
 
 describe( 'oauth2', () => {
 	// Same isolation rationale as the `auth` describe block above: a
-	// scratch XDG_CONFIG_HOME per test file, not the default `run()`
+	// scratch WRAPIDO_CONFIG_DIR per test file, not the default `run()`
 	// helper, so these tests never read/clobber a real config file.
 	let authConfigDir: string;
 
@@ -47,7 +47,7 @@ describe( 'oauth2', () => {
 				? [ args[ 0 ], 'oauth2', ...args.slice( 1 ) ]
 				: args;
 		return runCli( [ ...withType, '--quiet', '--no-color' ], {
-			env: { XDG_CONFIG_HOME: authConfigDir },
+			env: { WRAPIDO_CONFIG_DIR: authConfigDir },
 		} );
 	}
 
@@ -57,14 +57,14 @@ describe( 'oauth2', () => {
 				? [ args[ 0 ], 'application-passwords', ...args.slice( 1 ) ]
 				: args;
 		return runCli( [ ...withType, '--quiet', '--no-color' ], {
-			env: { XDG_CONFIG_HOME: authConfigDir },
+			env: { WRAPIDO_CONFIG_DIR: authConfigDir },
 		} );
 	}
 
 	function runRestWithConfig( args: string[] ) {
 		return runCli(
 			[ ...args, `--url=${ fixture.baseUrl }`, '--quiet', '--no-color' ],
-			{ env: { XDG_CONFIG_HOME: authConfigDir } }
+			{ env: { WRAPIDO_CONFIG_DIR: authConfigDir } }
 		);
 	}
 
@@ -104,7 +104,7 @@ describe( 'oauth2', () => {
 				'--quiet',
 				'--no-color',
 			],
-			{ env: { XDG_CONFIG_HOME: authConfigDir } }
+			{ env: { WRAPIDO_CONFIG_DIR: authConfigDir } }
 		);
 		let stdout = '';
 		const authorizeUrlFound = new Promise< string >( ( resolve ) => {
@@ -292,7 +292,7 @@ describe( 'oauth2', () => {
 				'--quiet',
 				'--no-color',
 			],
-			{ env: { XDG_CONFIG_HOME: authConfigDir } }
+			{ env: { WRAPIDO_CONFIG_DIR: authConfigDir } }
 		);
 		expect( add.exitCode ).toBe( 0 );
 		expect( add.stdout ).toContain( 'Success' );
@@ -415,7 +415,7 @@ describe( 'oauth2', () => {
 					'--quiet',
 					'--no-color',
 				],
-				{ env: { XDG_CONFIG_HOME: authConfigDir } }
+				{ env: { WRAPIDO_CONFIG_DIR: authConfigDir } }
 			);
 			expect( result.exitCode ).toBe( 1 );
 			expect( result.stderr ).toContain( 'already in use' );

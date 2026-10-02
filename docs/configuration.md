@@ -16,6 +16,8 @@ wrapido config clear
 
 Once saved, `--url`/`--username` become optional on every other command — pass them explicitly to override the saved default for a single invocation.
 
+The store (saved defaults, `wrapido auth` credentials and their encryption key) lives in your OS's config directory: `~/.config/wrapido` on Linux, `~/Library/Preferences/wrapido` on macOS, `%APPDATA%\wrapido\Config` on Windows. `wrapido config get` prints the exact path. Set `WRAPIDO_CONFIG_DIR` to use a different directory, e.g. a throwaway one for a script or a test run. It works on every OS, unlike `XDG_CONFIG_HOME`, which macOS and Windows ignore.
+
 !!! note "Credentials live under `wrapido auth`, not `wrapido config`"
 `wrapido config` only ever stores the default `--url`/`--username` shown above — it never stores a password. To store a full username/password (or Application Password) per site, and have it used automatically, see [`wrapido auth`](authentication.md#stored-credentials-wrapido-auth). `wrapido config clear` only clears the default `--url`/`--username`; it does not remove any credentials saved via `wrapido auth` — use `wrapido auth application-passwords remove <url>` (or `wrapido auth application-passwords remove --all`) for that.
 

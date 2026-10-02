@@ -29,7 +29,7 @@ afterAll( async () => {
 
 describe( 'auth', () => {
 	// Every stored credential goes through `conf`, keyed off
-	// XDG_CONFIG_HOME - isolating it to a scratch directory per test file
+	// WRAPIDO_CONFIG_DIR - isolating it to a scratch directory per test file
 	// (rather than reusing `run()`'s default env) keeps these tests from
 	// reading or clobbering a real config file on the machine running them.
 	let authConfigDir: string;
@@ -54,7 +54,7 @@ describe( 'auth', () => {
 				? [ args[ 0 ], AUTH_TYPE, ...args.slice( 1 ) ]
 				: args;
 		return runCli( [ ...withType, '--quiet', '--no-color' ], {
-			env: { XDG_CONFIG_HOME: authConfigDir },
+			env: { WRAPIDO_CONFIG_DIR: authConfigDir },
 		} );
 	}
 
@@ -76,7 +76,7 @@ describe( 'auth', () => {
 	async function simulateLogin( userLogin: string, url = fixture.baseUrl ) {
 		const child = runCli(
 			[ 'auth', AUTH_TYPE, 'login', url, '--quiet', '--no-color' ],
-			{ env: { XDG_CONFIG_HOME: authConfigDir } }
+			{ env: { WRAPIDO_CONFIG_DIR: authConfigDir } }
 		);
 		let stdout = '';
 		const authorizeUrlFound = new Promise< string >( ( resolve ) => {
@@ -141,7 +141,7 @@ describe( 'auth', () => {
 				'--quiet',
 				'--no-color',
 			],
-			{ env: { XDG_CONFIG_HOME: authConfigDir } }
+			{ env: { WRAPIDO_CONFIG_DIR: authConfigDir } }
 		);
 		expect( add.exitCode ).toBe( 0 );
 		expect( add.stdout ).toContain( 'Success' );
@@ -391,6 +391,50 @@ describe( 'auth', () => {
 	} );
 } );
 
+describe( 'config store location', () => {
+	/**
+	 * The `config file:` path `wrapido config get` reports.
+	 * @param env Extra env for the CLI.
+	 * @return The path.
+	 */
+	async function configFilePath( env?: Record< string, string > ) {
+		const get = await runCli(
+			[ 'config', 'get', '--quiet', '--no-color' ],
+			{
+				env,
+			}
+		);
+		return get.stdout
+			.split( '\n' )
+			.find( ( line ) => line.startsWith( 'config file:' ) )
+			?.replace( 'config file:', '' )
+			.trim() as string;
+	}
+
+	it( 'uses WRAPIDO_CONFIG_DIR on every OS', async () => {
+		const dir = await mkdtemp( join( tmpdir(), 'wrapido-config-dir-it-' ) );
+		try {
+			const set = await runCli(
+				[ 'config', 'set', '--url=https://example.com', '--quiet' ],
+				{ env: { WRAPIDO_CONFIG_DIR: dir } }
+			);
+			expect( set.exitCode ).toBe( 0 );
+			expect(
+				dirname( await configFilePath( { WRAPIDO_CONFIG_DIR: dir } ) )
+			).toBe( dir );
+			expect( existsSync( join( dir, 'credential-key' ) ) ).toBe( true );
+		} finally {
+			await rm( dir, { recursive: true, force: true } );
+		}
+	} );
+
+	it( "never points a test's CLI at the real config store", async () => {
+		// runCli's default: a scratch dir, so e.g. `auth use <fixture>` can't
+		// leave a dead 127.0.0.1 URL as a developer's saved default.
+		expect( await configFilePath() ).toContain( 'wrapido-it-config-' );
+	} );
+} );
+
 describe( 'config store recovery', () => {
 	// Each command is its own fresh process/module registry, unlike an
 	// in-process dynamic re-import — this is the only way to actually
@@ -411,13 +455,13 @@ describe( 'config store recovery', () => {
 					'--quiet',
 					'--no-color',
 				],
-				{ env: { XDG_CONFIG_HOME: recoveryDir } }
+				{ env: { WRAPIDO_CONFIG_DIR: recoveryDir } }
 			);
 			expect( set.exitCode ).toBe( 0 );
 
 			const get = await runCli(
 				[ 'config', 'get', '--quiet', '--no-color' ],
-				{ env: { XDG_CONFIG_HOME: recoveryDir } }
+				{ env: { WRAPIDO_CONFIG_DIR: recoveryDir } }
 			);
 			const configFileLine = get.stdout
 				.split( '\n' )
@@ -435,7 +479,7 @@ describe( 'config store recovery', () => {
 
 			const afterCorruption = await runCli(
 				[ 'config', 'get', '--quiet', '--no-color' ],
-				{ env: { XDG_CONFIG_HOME: recoveryDir } }
+				{ env: { WRAPIDO_CONFIG_DIR: recoveryDir } }
 			);
 			expect( afterCorruption.exitCode ).toBe( 0 );
 			expect( afterCorruption.stdout ).toContain( 'url: (not set)' );

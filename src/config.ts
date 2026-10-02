@@ -79,7 +79,12 @@ interface StoredConfig {
 // it, next to but separate from the config data — `conf` itself uses
 // `env-paths` internally for this same resolution, so passing `cwd`
 // explicitly here just makes that directory choice visible to this file too.
-const configDir = envPaths( 'wrapido', { suffix: '' } ).config;
+// `WRAPIDO_CONFIG_DIR` overrides it on every OS. `env-paths` only honours
+// `XDG_CONFIG_HOME` on Linux (macOS and Windows always use their own
+// locations), so it can't be used to isolate a run, e.g. the test suites.
+const configDir =
+	process.env.WRAPIDO_CONFIG_DIR ||
+	envPaths( 'wrapido', { suffix: '' } ).config;
 const keyFilePath = join( configDir, 'credential-key' );
 
 /**
