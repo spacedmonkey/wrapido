@@ -62,6 +62,7 @@ wrapido wp/v2 posts generate --count=50 --status=draft      # first item alone, 
 ```
 
 wrapido uses WordPress's batch endpoint (`POST /batch/v1`, WP 5.6+) on its own when the site allows it, and otherwise sends one request per item. The output is the same either way, so don't check the site first. It decides from the site's index:
+
 - the `/batch/v1` route exists;
 - its method enum includes the verb's method (`POST`/`PUT`/`PATCH`/`DELETE` in stock WordPress, so `get` is usually not batched);
 - the route says `allow_batch.v1 === true`. Posts, pages, custom post types, terms, menus, widgets and users opt in; media, comments and settings don't.
@@ -69,12 +70,13 @@ wrapido uses WordPress's batch endpoint (`POST /batch/v1`, WP 5.6+) on its own w
 Batches hold up to the route's `maxItems` (25 by default), so 200 items take about 8 requests. `--debug` logs why batching wasn't used for a run, and each batched item as `METHOD path → status code`.
 
 **Reading the result:**
+
 - **stdout** is a JSON array of every item that succeeded, even when some failed.
 - **Exit `1`** means at least one item failed or wasn't sent. Every problem is one JSON line on stderr:
-  - `{"error":{...},"id":"99"}` (`"index":N` for `generate`): that item failed. The rest of its batch already ran.
-  - `{"not_sent":[...]}`: these were never sent, because the run stops after the first failing request. Retry just these once the cause is fixed.
-  - `{"error":{...},"items":[...],"outcome":"unknown"}`: a batch timed out or got a 5xx. Those items **may or may not exist**, and wrapido never resends them. Check with `get`/`list` before retrying, **especially creates**, or you will make duplicates. `delete` is safe to rerun: already-deleted ids just return a 404.
-  - `{"error":{...},"outcome":"sent_individually"}`: informational only. The site refused batching (often a firewall), so wrapido sent the items one by one.
+    - `{"error":{...},"id":"99"}` (`"index":N` for `generate`): that item failed. The rest of its batch already ran.
+    - `{"not_sent":[...]}`: these were never sent, because the run stops after the first failing request. Retry just these once the cause is fixed.
+    - `{"error":{...},"items":[...],"outcome":"unknown"}`: a batch timed out or got a 5xx. Those items **may or may not exist**, and wrapido never resends them. Check with `get`/`list` before retrying, **especially creates**, or you will make duplicates. `delete` is safe to rerun: already-deleted ids just return a 404.
+    - `{"error":{...},"outcome":"sent_individually"}`: informational only. The site refused batching (often a firewall), so wrapido sent the items one by one.
 
 ## Getting everything: `--per_page=-1`
 
@@ -114,14 +116,16 @@ A `403` (`rest_forbidden`, `rest_cannot_*`) is different: the user *is* logged i
 
 To set up, ask which type the user wants (default: Application Passwords), then:
 
-**Application Passwords**
+#### Application Passwords
 
 1. The user creates one in wp-admin under Users → Profile → Application Passwords.
 2. Either they export it in the shell Claude Code runs from (`WP_USERNAME`, `WP_PASSWORD`) and nothing is stored, or store it per site:
    `wrapido auth application-passwords add <url> --username="$WP_USERNAME" --password="$WP_PASSWORD"` (verified before saving).
 3. Or the browser flow, which creates one for them: `wrapido auth application-passwords login <url>`.
 
-**OAuth2** (WP-API/OAuth2 plugin must be active; HTTPS required except on localhost)
+#### OAuth2
+
+The WP-API/OAuth2 plugin must be active, and HTTPS is required except on localhost.
 
 1. Except for a personal token, the user first creates an Application by hand in wp-admin under Users → Applications, with redirect URI `http://127.0.0.1:8787/callback`. wrapido can't do this step.
 2. Then one of:

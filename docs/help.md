@@ -50,7 +50,8 @@ Endpoint arguments are formatted the way real WP-CLI presents its own `OPTIONS`:
 - `<type>` (not the argument's name) is the placeholder, since — unlike a real WP-CLI command — a REST route's fields aren't known ahead of time.
 - A required argument is shown bare (`--title=<string>`, no brackets).
 - `default:`/`options:` blocks only appear when the schema actually declares them.
-- `get`/`update`/`delete` list their positional ids first, like WP-CLI does. They take one or more ids, so the synopsis shows `<id>...` (`exists` takes exactly one, `<id>`). A route whose URL parameter has another name shows that name instead, e.g. `<parent>...`:
+- `update`/`generate` borrow the `create` (`POST`) schema for their argument list — WordPress doesn't expose a separate schema for the item-level `PUT` endpoint, so this is the closest available approximation. Don't be surprised if an `update`'s listed options include a field the item endpoint doesn't actually accept.
+- `get`/`update`/`delete` list their positional ids first, like WP-CLI does. They take one or more ids, so the synopsis shows `<id>...` (`exists` takes exactly one, `<id>`). A route whose URL parameter has another name shows that name instead, e.g. `<parent>...`.
 
 <!-- markdownlint-disable-next-line MD046 -->
 ```text
@@ -64,8 +65,7 @@ OPTIONS
     One or more IDs of posts to delete.
 ```
 
-  `help <namespace> <route> <verb> --format=json` carries the same thing as `positional: {name, repeating, required, description}`.
-- `update`/`generate` borrow the `create` (`POST`) schema for their argument list — WordPress doesn't expose a separate schema for the item-level `PUT` endpoint, so this is the closest available approximation. Don't be surprised if an `update`'s listed options include a field the item endpoint doesn't actually accept.
+`help <namespace> <route> <verb> --format=json` carries the same thing as `positional: {name, repeating, required, description}`.
 
 ## Listing children
 
