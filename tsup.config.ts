@@ -11,9 +11,10 @@ export default defineConfig( {
 	format: [ 'esm' ],
 	target: 'node20',
 	// ora's cli-spinners does `import ... with {type: 'json'}`, which Node 20
-	// reports as "ExperimentalWarning: Importing JSON modules". Bundling both
-	// (ora alone would still import cli-spinners at runtime) inlines the JSON.
-	noExternal: [ 'ora', 'cli-spinners' ],
+	// reports as "ExperimentalWarning: Importing JSON modules". Bundling ora
+	// (and so its transitive cli-spinners) inlines the JSON. ora is a
+	// devDependency for the same reason: the published dist never imports it.
+	noExternal: [ 'ora' ],
 	clean: true,
 	dts: false,
 	// Only emit a sourcemap when collecting coverage (`npm run coverage`) —
