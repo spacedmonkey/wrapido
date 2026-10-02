@@ -10,6 +10,9 @@ export default defineConfig( {
 	entry: { cli: 'src/bin.ts' },
 	format: [ 'esm' ],
 	target: 'node20',
+	// Bundled so esbuild inlines its `import ... with {type: 'json'}`; left
+	// external, Node 20 prints "ExperimentalWarning: Importing JSON modules".
+	noExternal: [ 'cli-spinners' ],
 	clean: true,
 	dts: false,
 	// Only emit a sourcemap when collecting coverage (`npm run coverage`) —
