@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import Conf from 'conf';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 /**
  * Internal dependencies
@@ -13,7 +13,7 @@ import { dirname, join } from 'node:path';
 import { CliError } from '../../src/core/errors.js';
 
 // `conf`'s store is created once at module load time, keyed off
-// `XDG_CONFIG_HOME` — so it has to be pointed at a scratch directory *before*
+// `WRAPIDO_CONFIG_DIR` — so it has to be pointed at a scratch directory *before*
 // `../../src/config.js` is ever imported, and Jest's static `import` would
 // otherwise run before this file's own top-level code does. A dynamic
 // `import()` inside `beforeAll`, after setting the env var, is what makes
@@ -22,23 +22,23 @@ import { CliError } from '../../src/core/errors.js';
 // `wrapido config get` integration tests, which read the real one).
 let configModule: typeof import('../../src/config.js');
 let tempDir: string;
-const originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
+const originalConfigDir = process.env.WRAPIDO_CONFIG_DIR;
 
 beforeAll( async () => {
 	tempDir = mkdtempSync( join( tmpdir(), 'wrapido-config-test-' ) );
-	process.env.XDG_CONFIG_HOME = tempDir;
+	process.env.WRAPIDO_CONFIG_DIR = tempDir;
 	configModule = await import( '../../src/config.js' );
 } );
 
 afterAll( () => {
 	rmSync( tempDir, { recursive: true, force: true } );
-	// Restore rather than just delete — a real XDG_CONFIG_HOME set in the
+	// Restore rather than just delete — a WRAPIDO_CONFIG_DIR set in the
 	// environment this test runs in (uncommon, but possible) shouldn't be
 	// wiped out for whatever runs after this file in the same process.
-	if ( originalXdgConfigHome === undefined ) {
-		delete process.env.XDG_CONFIG_HOME;
+	if ( originalConfigDir === undefined ) {
+		delete process.env.WRAPIDO_CONFIG_DIR;
 	} else {
-		process.env.XDG_CONFIG_HOME = originalXdgConfigHome;
+		process.env.WRAPIDO_CONFIG_DIR = originalConfigDir;
 	}
 } );
 
@@ -385,6 +385,7 @@ describe( 'legacy sites shape migration', () => {
 		const rawStore = new Conf< { sites?: Record< string, unknown > } >( {
 			projectName: 'wrapido',
 			cwd: configDir,
+			configName: basename( configModule.configFilePath(), '.json' ),
 			encryptionKey,
 		} );
 		const existingSites = rawStore.get( 'sites' ) ?? {};

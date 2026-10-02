@@ -2,7 +2,11 @@
  * External dependencies
  */
 import { execa } from 'execa';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { afterAll } from 'vitest';
 
 /**
  * The built CLI entry point. Integration tests spawn this (via `node`)
@@ -48,6 +52,15 @@ const AGENT_ENV_SCRUB: Record< string, undefined > = Object.fromEntries(
 );
 
 /**
+ * A scratch config directory (`WRAPIDO_CONFIG_DIR`) every spawned CLI uses
+ * unless a test passes its own, so no test can read or overwrite the real
+ * config store (saved URL, stored credentials) of the machine running it, on
+ * any OS. Removed after the importing test file's tests finish.
+ */
+const defaultConfigDir = mkdtempSync( join( tmpdir(), 'wrapido-it-config-' ) );
+afterAll( () => rmSync( defaultConfigDir, { recursive: true, force: true } ) );
+
+/**
  * Spawns the built CLI as a child process.
  * @param args    CLI arguments.
  * @param options Extra options (`env`, `cwd`), merged over the
@@ -62,6 +75,10 @@ export function runCli( args: string[], options: RunCliOptions = {} ) {
 		...options,
 		// The suite itself may run inside an AI agent's shell, so scrub every
 		// agent marker: tests opt in explicitly (e.g. `WRAPIDO_AGENT: '1'`).
-		env: { ...AGENT_ENV_SCRUB, ...options.env },
+		env: {
+			...AGENT_ENV_SCRUB,
+			WRAPIDO_CONFIG_DIR: defaultConfigDir,
+			...options.env,
+		},
 	} );
 }
