@@ -35,8 +35,10 @@ To use `wrapido` as a global command instead of running it from inside this repo
 For local development, run commands directly against the TypeScript source without a build step:
 
 ```sh
-npm run wrapido -- <namespace> <route> [<verb>] [<id>] [--flag=value...] --url=<site>
+npm run -s wrapido -- <namespace> <route> [<verb>] [<id>] [--flag=value...] --url=<site>
 ```
+
+Keep `-s` so npm's own banner stays out of the output (it would break `--format=json` or `$(…)` captures), and put wrapido's flags after `--` so npm doesn't take them.
 
 ## Command grammar
 
@@ -143,6 +145,10 @@ wrapido wp/v2 posts update 42 --status=draft --url=https://example.com
 # Delete
 wrapido wp/v2 posts delete 42 --force --url=https://example.com
 
+# Delete every draft at once: several ids in one command, batched through /batch/v1
+wrapido --url=https://example.com wp/v2 posts delete $(wrapido --url=https://example.com wp/v2 posts list \
+  --per_page=-1 --fields=id --format=ids --status=draft --quiet)
+
 # Upload a file — the flag is whatever parameter the endpoint expects (`file` for core media)
 wrapido wp/v2 media create --file=./cat.jpg --title="Cat" --url=https://example.com
 
@@ -163,7 +169,7 @@ See [Uploading files](https://spacedmonkey.github.io/wrapido/uploading-files/) f
 ## Development
 
 ```sh
-npm run wrapido -- <args>   # run against source via tsx, no build needed
+npm run -s wrapido -- <args>   # run against source via tsx, no build needed (-s: no npm banner in the output)
 npm run build          # bundle to dist/cli.js (tsup)
 npm test                # jest (unit, via wp-scripts) + vitest (an execa-driven integration suite against a local fixture server)
 npm run coverage        # merged unit + integration coverage report (coverage/) and README badge update

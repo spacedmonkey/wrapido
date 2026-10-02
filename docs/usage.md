@@ -15,10 +15,10 @@ wrapido                                                         # discover: list
 wrapido <namespace>                                             # list routes registered under that namespace
 wrapido <namespace> <route>                                     # introspect: show the route's supported methods/args/context (an OPTIONS request)
 wrapido <namespace> <route> list        [--page=] [--per_page=] [...]   # --per_page=-1: every page
-wrapido <namespace> <route> get <id>
+wrapido <namespace> <route> get <id>...
 wrapido <namespace> <route> create      [--field=value...] [--body=<json>]
-wrapido <namespace> <route> update <id> [--field=value...] [--body=<json>]
-wrapido <namespace> <route> delete <id> [--force]
+wrapido <namespace> <route> update <id>... [--field=value...] [--body=<json>]
+wrapido <namespace> <route> delete <id>... [--force]
 wrapido <namespace> <route> exists <id>
 wrapido <namespace> <route> generate    [--count=<n>] [--field=value...]
 wrapido <namespace> <route> meta <add|clean-duplicates|delete|get|list|patch|pluck|update> ...
@@ -27,10 +27,11 @@ wrapido config get|set|clear
 ```
 
 -   `list`/`create`/`generate` don't take an `<id>` — everything after the verb is treated as `field=value` pairs.
--   `get`/`update`/`delete`/`exists` require an `<id>` as the first token after the verb.
+-   `get`/`update`/`delete`/`exists` require an `<id>` as the first token after the verb. `get`/`update`/`delete` take **one or more** ids (`<id>...`, like WP-CLI's `wp post delete 1 2 3`): every token before the first `field=value` is an id, and `update` applies the same fields to each. `exists` takes exactly one.
+-   With several ids, each id gets its own result: one `Success: Deleted posts 12.` line per id in table format, or an array in any other format (`get 12` still returns a single object). A failed id prints `<id>: Error: ...` on stderr and makes the command exit `1`; the other ids are still reported. See [Batch requests](#batch-requests).
 -   `exists` reuses `get`'s request shape but reports success/failure instead of printing the resource: exit code `0` if the id exists, `1` if it doesn't (a `404`).
 -   Any failure — a bad flag, a live API error, a network problem — prints `Error: ...` (or, under `--format=json`/[agent mode](agent-mode.md), a JSON `{"error":{...}}` object) to **stderr** and exits `1`; stdout is left untouched. Success exits `0`.
--   `generate` isn't a single HTTP request — it loops `create` `--count` times, reusing the same fields for each item.
+-   `generate` isn't a single HTTP request — it creates `--count` items, reusing the same fields for each item (batched where the site allows, see [Batch requests](#batch-requests)).
 -   A route registered under nested literal path segments (e.g. a theme's `global-styles/themes/(?P<stylesheet>%s)`) is addressed as separate words, the same way WP-CLI addresses nested commands — e.g. `wrapido wp/v2 global-styles themes get <stylesheet>`.
 
 ```mermaid
@@ -39,7 +40,8 @@ flowchart LR
     B --> C["&lt;route...&gt;"]
     C --> D{verb?}
     D -->|list / create / generate| E["field=value ..."]
-    D -->|get / update / delete / exists| F["&lt;id&gt; field=value ..."]
+    D -->|get / update / delete| F["&lt;id&gt;... field=value ..."]
+    D -->|exists| F2["&lt;id&gt;"]
     D -->|meta| G["&lt;meta-verb&gt; &lt;id&gt; ..."]
     D -->|none| H[introspect via OPTIONS]
 ```
@@ -66,6 +68,40 @@ A route with **two or more** placeholders (e.g. one specific revision of one spe
 
 **Discovering a site's REST API root.** Given just `--url=<site>`, the CLI tries, in order, until one works: a `HEAD` request's `Link: <...>; rel="https://api.w.org/"` header, then the same on a `GET`, then an HTML `<link rel="https://api.w.org/">` tag in the page, then the conventional `/wp-json/` path, then `/?rest_route=/` (for sites without pretty permalinks). `--debug` logs which attempt succeeded.
 
+## Batch requests
+
+WordPress 5.6+ has a batch endpoint, `POST /batch/v1`, that runs many write requests in one HTTP round-trip. wrapido uses it automatically for `generate --count=<n>` and for `update`/`delete` with several ids, when the site allows it. Otherwise it sends one request per item, with the same output either way.
+
+Everything is read from the site's own REST index. No limits are hardcoded:
+
+-   **Is there a batch endpoint?** It needs a `/batch/v1` route. WordPress 5.5 and older has none, and a plugin can remove it.
+-   **How many requests per batch?** That's the route's `requests.maxItems`, 25 by default (WordPress's `rest_get_max_batch_size` filter).
+-   **Which methods?** That's the route's method enum, `POST`/`PUT`/`PATCH`/`DELETE` in stock WordPress, so `get` is only batched on a site that adds `GET`.
+-   **Does this route allow it?** The route's endpoint for that method must say `allow_batch: {"v1": true}`. WordPress shows this in the index from 5.9. Core posts, pages, custom post types, terms, menus, widgets and (from 6.6) users opt in. Media, comments, settings and global styles don't.
+
+For example, to delete every draft post, feed the ids from `list` straight into `delete`. `--per_page=-1` fetches every page, `--format=ids` prints just the ids separated by spaces, and `--quiet` keeps notes out of the output:
+
+```sh
+wrapido --url=https://example.com wp/v2 posts delete $(wrapido --url=https://example.com wp/v2 posts list \
+  --per_page=-1 --fields=id --format=ids --status=draft --quiet)
+```
+
+Without `--force`, deleted posts go to the trash; add `--force` to delete them permanently. Running from a clone with `npm run`? Use `npm run -s wrapido -- …` for the inner command, or npm's banner ends up among the ids.
+
+`generate` always sends its first item on its own, so a missing required field fails fast with the usual error. The rest go in batches of `maxItems`, one batch at a time: 200 posts take 9 requests instead of 200. `--debug` logs why batching wasn't used for a run, and each batched item's status.
+
+**When a batch fails.** wrapido always prints the real cause (the HTTP status, plus WordPress's error code and message or the text of an HTML error page) and says what happened to each item:
+
+| What happened | What wrapido does | Exit |
+| --- | --- | --- |
+| The site refused the batch before running anything (a firewall's 403, a 404, a 413 "too large") | `Warning: Batch request failed (...); sending the remaining N items individually.` Batching stays off for the rest of the run. | `0` if every item then succeeds |
+| An item inside a batch failed | `#14: Error: ...` (or `<id>: Error: ...`). The rest of that batch already ran and is reported. Later items are listed as `Not sent:`. | `1` |
+| The outcome is unknown: a timeout, a 5xx, or a response that isn't JSON | `Batch request for #27–#51 failed.` with a hint that those items may or may not exist. **Nothing is resent**, since WordPress usually finishes a batch even after a proxy gives up, and resending would create duplicates. | `1` |
+
+In every case stdout still lists every item that **was** created, updated or deleted, so you can see what exists. This changed `generate`: it used to stop at the first failure without printing the items it had already created.
+
+A batch request gets 110 seconds (under Cloudflare's 125-second limit) rather than the usual 20; `--timeout` overrides both.
+
 **Error hints.** A local `CliError` or a live `WpApiError` prints a one-line `Error: ...`, and common REST error codes (`rest_forbidden`, `rest_no_route`, `rest_forbidden_context`, `rest_post_invalid_id`, `rest_invalid_param`, the `rest_upload_*` family, any `rest_cannot_*` code) get a human-readable hint appended beneath it — a hint can also be set per-error by the code that raised it (used by `generate`'s recovery path to explain exactly why a field couldn't be synthesized).
 
 **Ctrl-C during a progress bar.** Interrupting a `list --per_page=-1`, `generate`, or upload mid-flight (a progress bar or spinner is on screen) stops it cleanly and exits with code `130`, instead of leaving the terminal's line-wrapping disabled.
@@ -89,7 +125,7 @@ A route with **two or more** placeholders (e.g. one specific revision of one spe
 | `--no-color`                                          | `color: false` | Disable colored output. Also off when `NO_COLOR` is set or agent mode is on.                                                                                                                                                                                                                                                                                                                       |
 | `--no-pager`                                          | `pager: false` | Never page output, even at a terminal. See [Paging output](configuration.md#paging-output).                                                                                                                                                                                                                                                                                                        |
 | `--truncate-length=<n>`                               | —              | Max characters a table cell shows before truncating; default 50. `0` shows full values. Per-invocation only.                                                                                                                                                                                                                                                                                       |
-| `--quiet`                                             | `quiet`        | Suppress spinners.                                                                                                                                                                                                                                                                                                                                                                                 |
+| `--quiet`                                             | `quiet`        | Suppress spinners, progress bars and notes, plus Node's own process warnings (e.g. `ExperimentalWarning: Importing JSON modules ...` on older Node 20/22 releases). Errors and warnings about your command still print.                                                                                                                                                                            |
 | `--debug`                                             | `debug`        | Print a stack trace on unexpected (non-API) errors, and log every HTTP request/response to stderr plus the config files loaded and which site-discovery attempt succeeded (see [Routing](#routing)). Redacted before logging: the `Authorization`/cookie/`x-wp-nonce`/`x-api-key` headers, and `password`/`client_secret`/`code`/`access_token`/`refresh_token` body fields. API requests add `?_envelope=true` so WordPress returns its response headers (`X-WP-Total`, plugin headers such as Query Monitor's `X-QM-*`, ...), which are logged too; the body is unwrapped and output is unchanged. |
 | `-h`, `--help`                                        | —              | Show help for the given namespace/route/verb, or the top-level help.                                                                                                                                                                                                                                                                                                                               |
 

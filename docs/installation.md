@@ -64,14 +64,26 @@ npm uninstall -g wrapido
 For local development, run commands directly against the TypeScript source via [tsx](https://github.com/privatenumber/tsx):
 
 ```sh
-npm run wrapido -- <namespace> <route> [<verb>] [<id>] [--flag=value...] --url=<site>
+npm run -s wrapido -- <namespace> <route> [<verb>] [<id>] [--flag=value...] --url=<site>
 ```
+
+Two things to get right with `npm run`:
+
+-   **`-s` (`--silent`):** without it, npm prints its own `> wrapido@0.1.0 wrapido` banner on stdout before wrapido's output. That breaks anything that reads the output, such as `--format=json` piped to `jq`, or ids captured with `$(…)`:
+
+    ```sh
+    npm run -s wrapido -- wp/v2 posts delete $(npm run -s wrapido -- wp/v2 posts list --status=draft --per_page=-1 --format=ids) --url=<site>
+    ```
+
+    npm has no way to make a single script silent: `loglevel=silent` in `.npmrc` would also hide npm's own errors for every command, including `npm install`. So pass `-s` yourself.
+
+-   **`--` before wrapido's arguments:** npm takes any flag in front of it as one of its own options. `npm run wrapido --url=<site> --quiet` never passes `--url` or `--quiet` to wrapido.
 
 ## Development scripts
 
 | Command | Description |
 | --- | --- |
-| `npm run wrapido -- <args>` | Run against source via `tsx`, no build needed. |
+| `npm run -s wrapido -- <args>` | Run against source via `tsx`, no build needed. `-s` keeps npm's banner out of the output. |
 | `npm run build` | Bundle to `dist/cli.js` (tsup). |
 | `npm run dev` | `tsup --watch`. |
 | `npm test` | Run the full suite: Jest (unit tests) + Vitest (an execa-driven integration suite against a local fixture server). |

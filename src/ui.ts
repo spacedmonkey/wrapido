@@ -2,6 +2,7 @@
  * External dependencies
  */
 import cliProgress from 'cli-progress';
+import { clearLine, cursorTo } from 'node:readline';
 import ora, { type Ora } from 'ora';
 import picocolors from 'picocolors';
 
@@ -93,14 +94,27 @@ export function setColorEnabled( enabled: boolean ): void {
 	pc = picocolors.createColors( enabled );
 }
 
+/** Whether `--debug` is on (see {@link setDebugOutput}). */
+let debugOutput = false;
+
 /**
- * Starts a terminal spinner, unless spinners are disabled (`--quiet` or agent mode).
+ * Records whether `--debug` is on. Its request log is printed line by line to
+ * stderr, so spinners and animated progress bars (which redraw the current
+ * line) are turned off to keep the two from interleaving.
+ * @param enabled Whether `--debug` is on.
+ */
+export function setDebugOutput( enabled: boolean ): void {
+	debugOutput = enabled;
+}
+
+/**
+ * Starts a terminal spinner, unless spinners are disabled (`--quiet`, agent mode or `--debug`).
  * @param text    Label shown next to the spinner.
  * @param enabled Whether spinners are enabled for this invocation.
  * @return The running spinner, or undefined when disabled.
  */
 export function spinner( text: string, enabled: boolean ): Ora | undefined {
-	if ( ! enabled || agentMode() ) {
+	if ( ! enabled || agentMode() || debugOutput ) {
 		return undefined;
 	}
 	// isEnabled is forced on: humans keep spinners even when piped (as always).
@@ -166,6 +180,12 @@ export interface ProgressBar {
 	 * @param message The line to print.
 	 */
 	log: ( message: string ) => void;
+	/**
+	 * Prints a plain line (no icon) above the bar, e.g. an error. Unlike
+	 * `log`, never dropped: a disabled bar still writes it to stderr.
+	 * @param line The line to print.
+	 */
+	print: ( line: string ) => void;
 	/** Stops the bar, leaving the terminal on a fresh line below it. */
 	finish: () => void;
 }
@@ -185,6 +205,9 @@ const WP_CLI_PROGRESS_PRESET: cliProgress.Preset = {
 const NULL_PROGRESS_BAR: ProgressBar = {
 	tick() {},
 	log() {},
+	print( line: string ) {
+		process.stderr.write( `${ line }\n` );
+	},
 	finish() {},
 };
 
@@ -207,9 +230,10 @@ export function createProgressBar(
 	if ( ! enabled || total <= 0 ) {
 		return NULL_PROGRESS_BAR;
 	}
-	if ( agentMode() ) {
+	if ( agentMode() || debugOutput ) {
 		// No animated bar: cli-progress redraws with \r and hides the cursor
-		// via raw ANSI, which is exactly the noise agent mode exists to avoid.
+		// via raw ANSI, which is exactly the noise agent mode exists to avoid,
+		// and it would interleave with `--debug`'s request log.
 		// One plain start line, tick()'s existing `log()` calls still report
 		// per-item messages as-is, and one plain finish line with the count.
 		let done = 0;
@@ -220,6 +244,9 @@ export function createProgressBar(
 			},
 			log( logMessage: string ) {
 				notice( logMessage, true );
+			},
+			print( line: string ) {
+				process.stderr.write( `${ line }\n` );
 			},
 			finish() {
 				notice( `${ message }: done (${ done }/${ total }).`, true );
@@ -253,13 +280,30 @@ export function createProgressBar(
 		// so a message logged just before the bar finishes could be silently
 		// lost. `notice` prints immediately and unconditionally instead.
 		log( logMessage: string ) {
+			clearBarLine();
 			notice( logMessage, true );
+		},
+		print( line: string ) {
+			clearBarLine();
+			process.stderr.write( `${ line }\n` );
 		},
 		finish() {
 			process.off( 'SIGINT', onSigint );
 			bar.stop();
 		},
 	};
+}
+
+/**
+ * Erases the progress bar's current line, so a message printed while the bar
+ * is drawn starts on a clean line instead of after (or over) the bar's text.
+ * The bar redraws itself below on its next tick.
+ */
+function clearBarLine(): void {
+	if ( process.stderr.isTTY ) {
+		clearLine( process.stderr, 0 );
+		cursorTo( process.stderr, 0 );
+	}
 }
 
 /**

@@ -15,6 +15,7 @@ import {
 	type MetaVerb,
 	type ParsedMeta,
 } from './meta.js';
+import { describeShortfall, runItems } from './run-items.js';
 import { runUploadCommand } from './upload.js';
 import { BasicAuthProvider } from '../core/auth/basic.js';
 import { OAuth2AuthProvider } from '../core/auth/oauth2.js';
@@ -23,7 +24,13 @@ import {
 	APPLICATION_PASSWORDS_AUTH_TYPE,
 	OAUTH2_AUTH_TYPE,
 } from '../core/auth/types.js';
+import {
+	batchCapabilities,
+	canBatch,
+	type BatchCapabilities,
+} from '../core/batch.js';
 import { WpRestClient } from '../core/client.js';
+import { debugLog } from '../core/debug.js';
 import { resolveApiRoot } from '../core/discovery.js';
 import { CliError, WpApiError, hintFor } from '../core/errors.js';
 import { fetchAllPages } from '../core/fetch-all.js';
@@ -34,6 +41,7 @@ import {
 	fetchIndex,
 	routeChildren,
 	resolveRouteInfo,
+	itemRouteKey,
 	resolveMultiParamRoute,
 	spliceParams,
 	supportedVerbsForRoute,
@@ -47,7 +55,11 @@ import {
 	unknownFieldWarnings,
 	validateFieldTypes,
 } from '../core/validate.js';
-import { buildVerbRequest, isKeyedRoute } from '../core/verbs.js';
+import {
+	buildVerbRequest,
+	isKeyedRoute,
+	type VerbRequest,
+} from '../core/verbs.js';
 import type {
 	EndpointArgSchema,
 	GlobalFlags,
@@ -62,6 +74,7 @@ import {
 	pc,
 	notice,
 	createProgressBar,
+	warn,
 } from '../ui.js';
 
 const VERBS: Verb[] = [
@@ -87,6 +100,8 @@ export type ParsedCommand =
 			route: string;
 			verb: Verb;
 			id?: string;
+			/** Every id given (`get`/`update`/`delete` take `<id>...`); `id` is the first. */
+			ids?: string[];
 			fields: Record< string, string >;
 			/** Every value of a field given more than once (only file fields honor repeats). */
 			repeated?: Record< string, string[] >;
@@ -226,11 +241,22 @@ export function parseCommandArgs( args: string[] ): ParsedCommand {
 		verb === 'delete' ||
 		verb === 'exists'
 	) {
-		const [ id, ...fieldTokens ] = verbRest;
+		const [ id, ...afterId ] = verbRest;
 		if ( ! id || isFieldToken( id ) ) {
 			throw new CliError(
 				`"${ verb }" requires an <id> as its first argument.`
 			);
+		}
+		// `get`/`update`/`delete` take one or more ids (`<id>...`), like
+		// WP-CLI's `wp post delete 1 2 3`; `exists` answers for exactly one.
+		const moreIds: string[] = [];
+		if ( verb !== 'exists' ) {
+			while (
+				afterId.length &&
+				! isFieldToken( afterId[ 0 ] as string )
+			) {
+				moreIds.push( afterId.shift() as string );
+			}
 		}
 		return {
 			mode: 'verb',
@@ -238,8 +264,9 @@ export function parseCommandArgs( args: string[] ): ParsedCommand {
 			route,
 			verb,
 			id,
-			fields: parseFields( fieldTokens ),
-			repeated: collectRepeated( fieldTokens ),
+			ids: [ id, ...moreIds ],
+			fields: parseFields( afterId ),
+			repeated: collectRepeated( afterId ),
 		};
 	}
 
@@ -702,26 +729,28 @@ function buildVerbSynopsis(
 		: undefined;
 	const inlineArgs = formatArgsInline( endpoint?.args, urlParamName );
 	const idPlaceholder = `<${ urlParamName ?? 'id' }>`;
+	// get/update/delete take one or more ids, WP-CLI's `<id>...`.
+	const idsPlaceholder = `${ idPlaceholder }...`;
 
 	switch ( verb ) {
 		case 'list':
 			return [ base, inlineArgs ].filter( Boolean ).join( ' ' );
 		case 'get':
-			return `${ base } ${ idPlaceholder } [--context=<context>]`;
+			return `${ base } ${ idsPlaceholder } [--context=<context>]`;
 		case 'create':
 			return [ base, inlineArgs, '[--<field>=<value>]' ]
 				.filter( Boolean )
 				.join( ' ' );
 		case 'update':
 			return [
-				`${ base } ${ idPlaceholder }`,
+				`${ base } ${ idsPlaceholder }`,
 				inlineArgs,
 				'[--<field>=<value>]',
 			]
 				.filter( Boolean )
 				.join( ' ' );
 		case 'delete':
-			return `${ base } ${ idPlaceholder } [--force]`;
+			return `${ base } ${ idsPlaceholder } [--force]`;
 		case 'exists':
 			return `${ base } ${ idPlaceholder }`;
 		case 'generate':
@@ -1258,6 +1287,189 @@ async function resolveParamIndex(
 }
 
 /**
+ * Decides whether a run of `method` requests against a route can go through
+ * `/batch/v1`, from the site's index alone: the batch route must exist, accept
+ * `method`, and the route's own endpoint must opt in (`allow_batch`). Under
+ * `--debug`, says why batching wasn't used.
+ * @param client    The REST client.
+ * @param apiRoot   The REST API root URL.
+ * @param namespace The route's namespace.
+ * @param route     The route name.
+ * @param method    The requests' HTTP method.
+ * @param target    Whether the requests hit the collection or one item.
+ * @param worthIt   Whether there are enough items to batch at all.
+ * @param debug     Whether `--debug` is on.
+ * @return The site's batch limits, or undefined to send items one at a time.
+ */
+async function batchPlanFor(
+	client: WpRestClient,
+	apiRoot: string,
+	namespace: string,
+	route: string,
+	method: string,
+	target: 'collection' | 'item',
+	worthIt: boolean,
+	debug: boolean
+): Promise< BatchCapabilities | undefined > {
+	if ( ! worthIt ) {
+		return undefined;
+	}
+	const index = await fetchIndex( client, apiRoot );
+	const caps = batchCapabilities( index );
+	let reason: string | undefined;
+	if ( ! caps ) {
+		reason = 'the site has no usable /batch/v1 route';
+	} else {
+		const info = resolveRouteInfo( index, namespace, route );
+		const collectionKey =
+			! info.requiresParam && index.routes[ info.path ]
+				? info.path
+				: undefined;
+		const key =
+			target === 'item'
+				? itemRouteKey( index, namespace, route )
+				: collectionKey;
+		if ( ! key ) {
+			reason = `${ namespace }/${ route } isn't in the site index`;
+		} else if ( ! caps.methods.includes( method ) ) {
+			reason = `/batch/v1 doesn't accept ${ method }`;
+		} else if ( ! canBatch( index, caps, method, key ) ) {
+			reason = `${ namespace }/${ route } doesn't allow batch ${ method } requests`;
+		}
+	}
+	if ( reason ) {
+		if ( debug ) {
+			debugLog( `batch: not used (${ reason })` );
+		}
+		return undefined;
+	}
+	return caps;
+}
+
+/**
+ * Runs `get`/`update`/`delete` for several ids (`<id>...`): through
+ * `/batch/v1` when the site allows the verb's method on this route, one
+ * request per id otherwise. Prints one result per id, reports each failure,
+ * and exits 1 if any id failed.
+ * @param opts           What to run.
+ * @param opts.client    The REST client.
+ * @param opts.apiRoot   The REST API root URL.
+ * @param opts.namespace The route's namespace.
+ * @param opts.route     The route name.
+ * @param opts.verb      The verb being run.
+ * @param opts.ids       The ids, in the order given.
+ * @param opts.build     Builds one id's request.
+ * @param opts.flags     Global CLI flags.
+ * @return The rendered output and exit code.
+ */
+async function runMultiIdCommand( opts: {
+	client: WpRestClient;
+	apiRoot: string;
+	namespace: string;
+	route: string;
+	verb: 'get' | 'update' | 'delete';
+	ids: string[];
+	build: ( id: string ) => VerbRequest;
+	flags: GlobalFlags;
+} ): Promise< { output: string; exitCode: number } > {
+	const { client, apiRoot, namespace, route, verb, ids, flags } = opts;
+	const method = opts.build( ids[ 0 ] as string ).method;
+	const batch = await batchPlanFor(
+		client,
+		apiRoot,
+		namespace,
+		route,
+		method,
+		'item',
+		true,
+		flags.debug
+	);
+	const progress = createProgressBar(
+		`${ method } ${ namespace }/${ route }`,
+		ids.length,
+		! flags.quiet
+	);
+	const idAt = ( i: number ) => ids[ i ] as string;
+	let run;
+	try {
+		run = await runItems( {
+			count: ids.length,
+			key: idAt,
+			keyName: 'id',
+			label: idAt,
+			sendOne: async ( i ) => {
+				const request = opts.build( idAt( i ) );
+				const response = await client.request( request.url, {
+					method: request.method,
+					body: request.body,
+				} );
+				return response.body;
+			},
+			batch: batch && {
+				maxItems: batch.maxItems,
+				build: ( i ) => opts.build( idAt( i ) ),
+				finish: async ( response ) => response.body,
+			},
+			firstAlone: false,
+			client,
+			apiRoot,
+			debug: flags.debug,
+			json: agentMode() || flags.format === 'json',
+			say: ( line ) => progress.print( line ),
+			tick: () => progress.tick(),
+			unknownHint:
+				verb === 'delete'
+					? 'These may or may not have been deleted. Re-running the same delete is safe: ids already deleted just report an error.'
+					: `These may or may not have been ${
+							verb === 'update' ? 'updated' : 'read'
+					  }. Check with \`wrapido ${ namespace } ${ route } get <id>\`.`,
+		} );
+	} finally {
+		progress.finish();
+	}
+	const exitCode = run.failed ? 1 : 0;
+	if ( run.failed && ! agentMode() && flags.format !== 'json' ) {
+		process.stderr.write(
+			`${ warn(
+				describeShortfall(
+					run.counts,
+					ids.length,
+					'ids',
+					{ get: 'read', update: 'updated', delete: 'deleted' }[
+						verb
+					]
+				)
+			) }\n`
+		);
+	}
+	if (
+		verb !== 'get' &&
+		flags.format === 'table' &&
+		! flags.field &&
+		! flags.fields
+	) {
+		const verbLabel = verb === 'update' ? 'Updated' : 'Deleted';
+		return {
+			output: run.succeeded
+				.map( ( i ) =>
+					pc.green(
+						`Success: ${ verbLabel } ${ route } ${ idAt( i ) }.`
+					)
+				)
+				.join( '\n' ),
+			exitCode,
+		};
+	}
+	const output = await formatOutput( run.results, {
+		format: flags.format,
+		fields: flags.fields,
+		field: flags.field,
+		color: flags.color,
+	} );
+	return { output, exitCode };
+}
+
+/**
  * Best-effort discovers a real widget type id for `wp/v2/widgets`' `id_base`
  * field — the one hidden-required-field case (see
  * `HIDDEN_REQUIRED_FIELDS_BY_ERROR_CODE`) that can't be synthesized from
@@ -1436,13 +1648,68 @@ function renderRouteHelp(
  */
 const VERB_DESCRIPTIONS: Record< Verb, ( route: string ) => string > = {
 	list: ( route ) => `Gets a list of ${ route }.`,
-	get: ( route ) => `Gets details about a ${ route } item.`,
+	get: ( route ) => `Gets details about one or more ${ route } items.`,
 	create: ( route ) => `Creates a new ${ route } item.`,
 	update: ( route ) => `Updates one or more existing ${ route } items.`,
-	delete: ( route ) => `Deletes an existing ${ route } item.`,
+	delete: ( route ) => `Deletes one or more existing ${ route } items.`,
 	exists: ( route ) => `Verifies whether a ${ route } item exists.`,
 	generate: ( route ) => `Generates some ${ route } items.`,
 };
+
+/**
+ * The `<id>...` positional's description for verbs that take one or more ids,
+ * worded like WP-CLI's own ("One or more IDs of posts to delete.").
+ */
+const ID_ARG_DESCRIPTIONS: Partial<
+	Record< Verb, ( route: string, param: string ) => string >
+> = {
+	get: ( route, param ) =>
+		`One or more ${ idNoun( param ) } of ${ route } to get.`,
+	update: ( route, param ) =>
+		`One or more ${ idNoun( param ) } of ${ route } to update.`,
+	delete: ( route, param ) =>
+		`One or more ${ idNoun( param ) } of ${ route } to delete.`,
+	exists: ( route, param ) =>
+		`The ${
+			param === 'id' ? 'ID' : param
+		} of the ${ route } item to check.`,
+};
+
+/**
+ * Pluralises a URL parameter name for an `<id>...` description.
+ * @param param The parameter name, e.g. `id` or `parent`.
+ * @return `IDs` for `id`, otherwise `<param> values`.
+ */
+function idNoun( param: string ): string {
+	return param === 'id' ? 'IDs' : `${ param } values`;
+}
+
+/**
+ * The positional `<id>` argument a verb takes, if any, for help output.
+ * @param route     The route name.
+ * @param verb      The verb.
+ * @param paramName The route's own URL parameter name, if it has one.
+ * @return The argument, or undefined for verbs that take no id.
+ */
+function idPositional(
+	route: string,
+	verb: Verb,
+	paramName?: string
+):
+	| { name: string; repeating: boolean; required: true; description: string }
+	| undefined {
+	const describe = ID_ARG_DESCRIPTIONS[ verb ];
+	if ( ! describe ) {
+		return undefined;
+	}
+	const name = paramName ?? 'id';
+	return {
+		name,
+		repeating: verb !== 'exists',
+		required: true,
+		description: describe( route, name ),
+	};
+}
 
 /** Verb-specific notes shown beneath OPTIONS/SUBCOMMANDS in the `--help` page. */
 const VERB_NOTES: Partial< Record< Verb, string > > = {
@@ -1538,6 +1805,27 @@ function buildExampleInvocation(
 	return [ base + id, requiredArgs, '--url=https://example.com' ]
 		.filter( Boolean )
 		.join( ' ' );
+}
+
+/**
+ * A second example for verbs that take several ids, e.g.
+ * `wrapido wp/v2 posts delete 123 456 --url=https://example.com`.
+ * @param namespace The route's namespace.
+ * @param route     The route name.
+ * @param verb      The verb.
+ * @return The example command line, or undefined for single-id verbs.
+ */
+function buildMultiIdExample(
+	namespace: string,
+	route: string,
+	verb: Verb
+): string | undefined {
+	if ( verb !== 'get' && verb !== 'update' && verb !== 'delete' ) {
+		return undefined;
+	}
+	return `wrapido ${ namespace } ${ route } ${ verb } 123 456${
+		verb === 'update' ? ' --<field>=<value>' : ''
+	} --url=https://example.com`;
 }
 
 /**
@@ -1676,6 +1964,7 @@ function renderRouteHelpWpCli(
  * @param verb           The verb to describe.
  * @param endpoints      The route's introspected endpoints.
  * @param supportedVerbs The verbs this route actually supports.
+ * @param paramName      The route's own URL parameter name, if it has one.
  * @return The rendered help page.
  */
 function renderVerbHelpWpCli(
@@ -1683,7 +1972,8 @@ function renderVerbHelpWpCli(
 	route: string,
 	verb: Verb,
 	endpoints: RouteEndpoint[],
-	supportedVerbs: Verb[]
+	supportedVerbs: Verb[],
+	paramName?: string
 ): string {
 	const lines: string[] = [
 		pc.bold( 'NAME' ),
@@ -1713,20 +2003,35 @@ function renderVerbHelpWpCli(
 		'',
 		pc.bold( 'SYNOPSIS' ),
 		'',
-		`  ${ buildVerbSynopsis( namespace, route, verb, endpoints ) }`
+		`  ${ buildVerbSynopsis(
+			namespace,
+			route,
+			verb,
+			endpoints,
+			paramName
+		) }`
 	);
 
 	const method = COLLECTION_VERB_METHOD[ verb ];
 	const endpoint = method
 		? endpoints.find( ( e ) => e.methods.includes( method ) )
 		: undefined;
-	if ( endpoint ) {
-		lines.push(
-			'',
-			pc.bold( 'OPTIONS' ),
-			'',
-			...formatOptionsWpCli( endpoint )
-		);
+	// WP-CLI lists positional arguments first under OPTIONS.
+	const positional = idPositional( route, verb, paramName );
+	const optionLines = [
+		...( positional
+			? [
+					`  <${ positional.name }>${
+						positional.repeating ? '...' : ''
+					}`,
+					`    ${ positional.description }`,
+			  ]
+			: [] ),
+		...( positional && endpoint ? [ '' ] : [] ),
+		...( endpoint ? formatOptionsWpCli( endpoint ) : [] ),
+	];
+	if ( optionLines.length ) {
+		lines.push( '', pc.bold( 'OPTIONS' ), '', ...optionLines );
 	}
 
 	if ( VERB_NOTES[ verb ] ) {
@@ -1740,6 +2045,16 @@ function renderVerbHelpWpCli(
 		`    # ${ VERB_DESCRIPTIONS[ verb ]( route ) }`,
 		`    $ ${ buildExampleInvocation( namespace, route, verb, endpoint ) }`
 	);
+	const multiIdExample = buildMultiIdExample( namespace, route, verb );
+	if ( multiIdExample ) {
+		lines.push(
+			'',
+			`    # ${
+				verb.charAt( 0 ).toUpperCase() + verb.slice( 1 )
+			} several ${ route } items at once`,
+			`    $ ${ multiIdExample }`
+		);
+	}
 
 	return lines.join( '\n' );
 }
@@ -2163,33 +2478,27 @@ export async function runRestCommand(
 			return followed ? followed.body : response.body;
 		}
 
-		// Progress bar takes over from here — no more per-item spinner text,
-		// it just ticks once for every item actually created.
-		const progress = createProgressBar(
-			`Generating ${ generateNamespace }/${ generateRoute }`,
-			count,
-			! flags.quiet
-		);
-		const created: unknown[] = [];
-		try {
-			for ( let i = 0; i < count; i++ ) {
-				const index = i + 1;
-				try {
-					created.push(
-						await sendGenerateRequest(
-							index,
-							buildGenerateFields( index )
-						)
-					);
-				} catch ( error ) {
-					const impliedFieldNames =
-						hiddenRequiredFallbackArgs.length === 0 &&
-						error instanceof WpApiError
-							? HIDDEN_REQUIRED_FIELDS_BY_ERROR_CODE[ error.code ]
-							: undefined;
-					const fallbackEntries: Array<
-						[ string, EndpointArgSchema ]
-					> = impliedFieldNames
+		/**
+		 * Runs one item's create on its own, recovering from the hidden
+		 * required-field and `id_base` rejections described above by retrying
+		 * once with the extra fields filled in.
+		 * @param index The 1-based position of the item being generated.
+		 * @return The created item's response body.
+		 */
+		async function generateOne( index: number ): Promise< unknown > {
+			try {
+				return await sendGenerateRequest(
+					index,
+					buildGenerateFields( index )
+				);
+			} catch ( error ) {
+				const impliedFieldNames =
+					hiddenRequiredFallbackArgs.length === 0 &&
+					error instanceof WpApiError
+						? HIDDEN_REQUIRED_FIELDS_BY_ERROR_CODE[ error.code ]
+						: undefined;
+				const fallbackEntries: Array< [ string, EndpointArgSchema ] > =
+					impliedFieldNames
 						? impliedFieldNames
 								.map(
 									( name ) =>
@@ -2207,83 +2516,150 @@ export async function runRestCommand(
 								)
 						: [];
 
-					if ( fallbackEntries.length ) {
-						hiddenRequiredFallbackArgs.push( ...fallbackEntries );
-						progress.log(
-							`Note: the API rejected an empty item; also generating ${ fallbackEntries
-								.map( ( [ name ] ) => `--${ name }` )
-								.join( ', ' ) }.`
-						);
-						created.push(
-							await sendGenerateRequest(
-								index,
-								buildGenerateFields( index )
-							)
-						);
-						progress.tick();
-						continue;
-					}
-
-					// `id_base` needs a value discovered from a live
-					// request (see `resolveWidgetIdBase`), not one of
-					// `HIDDEN_REQUIRED_FIELDS_BY_ERROR_CODE`'s synthesized
-					// placeholders — handled as a separate fallback path.
-					const canResolveIdBase =
-						! ( 'id_base' in fixedFallbackFields ) &&
-						generateArgs?.id_base &&
-						! ( 'id_base' in createFields ) &&
-						error instanceof WpApiError &&
-						error.code === 'rest_invalid_widget';
-					const discoveredIdBase = canResolveIdBase
-						? await resolveWidgetIdBase(
-								client,
-								apiRoot,
-								generateNamespace
-						  )
-						: undefined;
-					if ( ! discoveredIdBase ) {
-						// A schema-less create route (no declared args at
-						// all) means neither `missingRequiredArgs` nor
-						// `HIDDEN_REQUIRED_FIELDS_BY_ERROR_CODE` had
-						// anything to synthesize — surface why recovery
-						// didn't happen instead of just rethrowing the raw
-						// API error with no CLI-added context.
-						if (
-							error instanceof WpApiError &&
-							! error.hint &&
-							! hintFor( error.code ) &&
-							Object.keys( generateArgs ?? {} ).length === 0
-						) {
-							error.hint =
-								"This route's schema declares no fields, so generate couldn't synthesize a value for whatever the API is rejecting. Pass the required field(s) explicitly, e.g. `wrapido <namespace> <route> generate field=value`.";
-						}
-						throw error;
-					}
-					fixedFallbackFields.id_base = discoveredIdBase;
+				if ( fallbackEntries.length ) {
+					hiddenRequiredFallbackArgs.push( ...fallbackEntries );
 					progress.log(
-						`Note: --id_base not supplied; using the first available widget type ("${ discoveredIdBase }").`
+						`Note: the API rejected an empty item; also generating ${ fallbackEntries
+							.map( ( [ name ] ) => `--${ name }` )
+							.join( ', ' ) }.`
 					);
-					created.push(
-						await sendGenerateRequest(
-							index,
-							buildGenerateFields( index )
-						)
+					return await sendGenerateRequest(
+						index,
+						buildGenerateFields( index )
 					);
 				}
-				progress.tick();
+
+				// `id_base` needs a value discovered from a live request (see
+				// `resolveWidgetIdBase`), not one of
+				// `HIDDEN_REQUIRED_FIELDS_BY_ERROR_CODE`'s synthesized
+				// placeholders — handled as a separate fallback path.
+				const canResolveIdBase =
+					! ( 'id_base' in fixedFallbackFields ) &&
+					generateArgs?.id_base &&
+					! ( 'id_base' in createFields ) &&
+					error instanceof WpApiError &&
+					error.code === 'rest_invalid_widget';
+				const discoveredIdBase = canResolveIdBase
+					? await resolveWidgetIdBase(
+							client,
+							apiRoot,
+							generateNamespace
+					  )
+					: undefined;
+				if ( ! discoveredIdBase ) {
+					// A schema-less create route (no declared args at all)
+					// means neither `missingRequiredArgs` nor
+					// `HIDDEN_REQUIRED_FIELDS_BY_ERROR_CODE` had anything to
+					// synthesize — surface why recovery didn't happen instead
+					// of just rethrowing the raw API error with no CLI-added
+					// context.
+					if (
+						error instanceof WpApiError &&
+						! error.hint &&
+						! hintFor( error.code ) &&
+						Object.keys( generateArgs ?? {} ).length === 0
+					) {
+						error.hint =
+							"This route's schema declares no fields, so generate couldn't synthesize a value for whatever the API is rejecting. Pass the required field(s) explicitly, e.g. `wrapido <namespace> <route> generate field=value`.";
+					}
+					throw error;
+				}
+				fixedFallbackFields.id_base = discoveredIdBase;
+				progress.log(
+					`Note: --id_base not supplied; using the first available widget type ("${ discoveredIdBase }").`
+				);
+				return await sendGenerateRequest(
+					index,
+					buildGenerateFields( index )
+				);
 			}
+		}
+
+		const batch = await batchPlanFor(
+			client,
+			apiRoot,
+			generateNamespace,
+			generateRoute,
+			'POST',
+			'collection',
+			count >= 3,
+			flags.debug
+		);
+
+		// Progress bar takes over from here — no more per-item spinner text,
+		// it just ticks once for every item actually created.
+		const progress = createProgressBar(
+			`Generating ${ generateNamespace }/${ generateRoute }`,
+			count,
+			! flags.quiet
+		);
+		let run;
+		try {
+			run = await runItems( {
+				count,
+				key: ( i ) => i + 1,
+				keyName: 'index',
+				label: ( i ) => `#${ i + 1 }`,
+				sendOne: ( i ) => generateOne( i + 1 ),
+				batch: batch && {
+					maxItems: batch.maxItems,
+					build: ( i ) =>
+						buildVerbRequest( {
+							verb: 'create',
+							apiRoot,
+							namespace: generateNamespace,
+							route: generateRoute,
+							context: flags.context,
+							fields: coerceJsonFields(
+								buildGenerateFields( i + 1 ),
+								generateArgs
+							),
+							bodyOverride: resolveBodyOverride( flags.body ),
+							responseFields: flags.fields,
+						} ),
+					finish: async ( response ) => {
+						const followed = await followCreatedLocation(
+							client,
+							apiRoot,
+							response,
+							flags
+						);
+						return followed ? followed.body : response.body;
+					},
+				},
+				firstAlone: true,
+				client,
+				apiRoot,
+				debug: flags.debug,
+				json: agentMode() || flags.format === 'json',
+				say: ( line ) => progress.print( line ),
+				tick: () => progress.tick(),
+				unknownHint: `These items may or may not have been created. Check with \`wrapido ${ generateNamespace } ${ generateRoute } list\`.`,
+			} );
 		} finally {
 			progress.finish();
 		}
+		const created = run.results;
+		const exitCode = run.failed ? 1 : 0;
+		if ( run.failed && ! agentMode() && flags.format !== 'json' ) {
+			process.stderr.write(
+				`${ warn(
+					describeShortfall( run.counts, count, 'items', 'created' )
+				) }\n`
+			);
+		}
 		if ( flags.format === 'table' && ! flags.field && ! flags.fields ) {
+			if ( ! created.length ) {
+				return { output: '', exitCode };
+			}
 			const ids = created
 				.map( ( r ) => ( r as { id?: unknown } | undefined )?.id ?? '' )
 				.join( ' ' );
 			return {
 				output: pc.green(
-					`Success: created ${ count } ${ parsed.route }: ${ ids }`.trim()
+					`Success: created ${ created.length } ${ parsed.route }: ${ ids }`.trim()
 				),
-				exitCode: 0,
+				exitCode,
 			};
 		}
 		const output = await formatOutput( created, {
@@ -2292,7 +2668,7 @@ export async function runRestCommand(
 			field: flags.field,
 			color: flags.color,
 		} );
-		return { output, exitCode: 0 };
+		return { output, exitCode };
 	}
 
 	// parsed.mode === 'verb', parsed.verb is now one of list/get/create/update/delete
@@ -2357,6 +2733,41 @@ export async function runRestCommand(
 		uploadPlan ? uploadPlan.textFields : parsed.fields,
 		verbArgs
 	);
+	const ids = parsed.ids ?? [];
+	if (
+		ids.length > 1 &&
+		( parsed.verb === 'get' ||
+			parsed.verb === 'update' ||
+			parsed.verb === 'delete' )
+	) {
+		if ( uploadPlan ) {
+			throw new CliError(
+				"A file upload can't be combined with multiple ids."
+			);
+		}
+		return runMultiIdCommand( {
+			client,
+			apiRoot,
+			namespace: parsed.namespace,
+			route: parsed.route,
+			verb: parsed.verb,
+			ids,
+			build: ( id ) =>
+				buildVerbRequest( {
+					verb: parsed.verb as 'get' | 'update' | 'delete',
+					apiRoot,
+					namespace: parsed.namespace,
+					route: parsed.route,
+					id,
+					paramIndex,
+					context: flags.context,
+					fields: requestFields,
+					bodyOverride: resolveBodyOverride( flags.body ),
+					responseFields: flags.fields,
+				} ),
+			flags,
+		} );
+	}
 	const request = buildVerbRequest( {
 		verb: parsed.verb,
 		apiRoot,
@@ -2679,6 +3090,11 @@ export async function runHelpCommand(
 					route: parsed.route,
 					verb: parsed.verb,
 					paramName,
+					positional: idPositional(
+						parsed.route,
+						parsed.verb,
+						paramName
+					),
 					verbs,
 					endpoints: withRequiredLists(
 						( schema.endpoints ?? [] ).filter(
@@ -2708,7 +3124,8 @@ export async function runHelpCommand(
 						parsed.route,
 						parsed.verb,
 						schema.endpoints ?? [],
-						verbs
+						verbs,
+						paramName
 				  )
 				: printVerbHelp(
 						parsed.namespace,

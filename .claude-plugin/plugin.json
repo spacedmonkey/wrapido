@@ -1,7 +1,7 @@
 {
 	"name": "wrapido",
 	"description": "Teach Claude to use the wrapido CLI to read and change WordPress content through the REST API.",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"author": {
 		"name": "Spacedmonkey",
 		"email": "spacedmonkey2@gmail.com"

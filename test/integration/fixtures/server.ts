@@ -372,6 +372,190 @@ async function readMultipart( req: IncomingMessage ): Promise< {
 	return { fields, files, contentLength: buffer.length };
 }
 
+/**
+ * How the fixture's `POST /wp-json/batch/v1` behaves:
+ *  - `normal`: runs each item against this server, returns 207 envelopes.
+ *  - `absent`: no `/batch/v1` in the index (WP 5.5, or removed); 404 if hit.
+ *  - `html-403`: a firewall's HTML block page; nothing runs.
+ *  - `json-200`: JSON, but not a batch response (a proxy answering).
+ *  - `html-200`: runs the items, then answers with HTML (PHP notices).
+ *  - `too-large`: 413 HTML; nothing runs.
+ *  - `timeout-504`: runs the items, then a gateway's 504 HTML.
+ *  - `not-allowed`: every item `rest_batch_not_allowed`, despite the index.
+ *  - `fail-second`: like `normal`, but the 2nd and 4th items return an error.
+ */
+export type BatchMode =
+	| 'normal'
+	| 'absent'
+	| 'html-403'
+	| 'json-200'
+	| 'html-200'
+	| 'too-large'
+	| 'timeout-504'
+	| 'not-allowed'
+	| 'fail-second';
+
+const batchState = {
+	mode: 'normal' as BatchMode,
+	maxItems: 3,
+	methods: [ 'POST', 'PUT', 'PATCH', 'DELETE' ],
+	sizes: [] as number[],
+};
+
+/**
+ * Configures the fixture's batch route for the next CLI run. Call with no
+ * arguments to restore the defaults.
+ * @param options          What to change.
+ * @param options.mode     How `POST /batch/v1` behaves (see {@link BatchMode}).
+ * @param options.maxItems The advertised `requests.maxItems`.
+ * @param options.methods  The advertised sub-request method enum.
+ */
+export function setBatchBehavior(
+	options: { mode?: BatchMode; maxItems?: number; methods?: string[] } = {}
+): void {
+	batchState.mode = options.mode ?? 'normal';
+	batchState.maxItems = options.maxItems ?? 3;
+	batchState.methods = options.methods ?? [
+		'POST',
+		'PUT',
+		'PATCH',
+		'DELETE',
+	];
+	batchState.sizes = [];
+}
+
+/** @return The number of items in each `POST /batch/v1` received since the last reset. */
+export function getBatchSizes(): number[] {
+	return [ ...batchState.sizes ];
+}
+
+/**
+ * Handles `POST /wp-json/batch/v1` per {@link batchState}, running each item
+ * as a real request against this same server, like WordPress dispatching
+ * each sub-request internally.
+ * @param req The incoming request.
+ * @param res The response to write.
+ */
+async function handleBatch(
+	req: IncomingMessage,
+	res: ServerResponse
+): Promise< void > {
+	const html = ( status: number, text: string ) => {
+		res.writeHead( status, { 'content-type': 'text/html' } );
+		res.end( `<html><body><h1>${ text }</h1></body></html>` );
+	};
+	const { mode, maxItems, methods } = batchState;
+	if ( mode === 'absent' ) {
+		send( res, 404, {
+			code: 'rest_no_route',
+			message: 'No route was found matching the URL and request method.',
+			data: { status: 404 },
+		} );
+		return;
+	}
+	const body = await readBody( req );
+	const requests = Array.isArray( body.requests )
+		? ( body.requests as Array< {
+				method?: string;
+				path: string;
+				body?: unknown;
+		  } > )
+		: [];
+	batchState.sizes.push( requests.length );
+	if ( mode === 'html-403' ) {
+		html( 403, 'Access denied by the fixture firewall' );
+		return;
+	}
+	if ( mode === 'too-large' ) {
+		html( 413, '413 Request Entity Too Large' );
+		return;
+	}
+	if ( mode === 'json-200' ) {
+		send( res, 200, { ok: true } );
+		return;
+	}
+	if ( ! requests.length ) {
+		send( res, 400, {
+			code: 'rest_missing_callback_param',
+			message: 'Missing parameter(s): requests',
+			data: { status: 400, params: [ 'requests' ] },
+		} );
+		return;
+	}
+	if ( requests.length > maxItems ) {
+		send( res, 400, {
+			code: 'rest_invalid_param',
+			message: 'Invalid parameter(s): requests',
+			data: {
+				status: 400,
+				params: {
+					requests: `requests must contain at most ${ maxItems } items.`,
+				},
+			},
+		} );
+		return;
+	}
+	const responses = [];
+	for ( const [ i, item ] of requests.entries() ) {
+		const method = item.method ?? 'POST';
+		const allowed =
+			mode !== 'not-allowed' &&
+			methods.includes( method ) &&
+			/^\/wp\/v2\/widgets(\/\d+)?(\?|$)/.test( item.path );
+		if ( ! allowed ) {
+			responses.push( {
+				body: {
+					code: 'rest_batch_not_allowed',
+					message:
+						'The requested route does not support batch requests.',
+					data: { status: 400 },
+				},
+				status: 400,
+				headers: {},
+			} );
+			continue;
+		}
+		if ( mode === 'fail-second' && ( i === 1 || i === 3 ) ) {
+			responses.push( {
+				body: {
+					code: 'rest_invalid_param',
+					message: 'The fixture rejected this item.',
+					data: { status: 400 },
+				},
+				status: 400,
+				headers: {},
+			} );
+			continue;
+		}
+		const response = await fetch(
+			`${ baseUrlHolder.value }/wp-json${ item.path }`,
+			{
+				method,
+				headers: { 'content-type': 'application/json' },
+				body:
+					item.body === undefined
+						? undefined
+						: JSON.stringify( item.body ),
+			}
+		);
+		const text = await response.text();
+		responses.push( {
+			body: text ? JSON.parse( text ) : null,
+			status: response.status,
+			headers: Object.fromEntries( response.headers ),
+		} );
+	}
+	if ( mode === 'html-200' ) {
+		html( 200, 'Warning: something printed before the JSON' );
+		return;
+	}
+	if ( mode === 'timeout-504' ) {
+		html( 504, '504 Gateway Time-out' );
+		return;
+	}
+	send( res, 207, { responses } );
+}
+
 export async function startFixture(): Promise< Fixture > {
 	const server = createServer( async ( req, res ) => {
 		const url = new URL( req.url ?? '/', 'http://localhost' );
@@ -383,6 +567,11 @@ export async function startFixture(): Promise< Fixture > {
 		const slowMs = Number( url.searchParams.get( 'slow' ) );
 		if ( slowMs > 0 ) {
 			await new Promise( ( resolve ) => setTimeout( resolve, slowMs ) );
+		}
+
+		if ( req.method === 'POST' && path === '/wp-json/batch/v1' ) {
+			await handleBatch( req, res );
+			return;
 		}
 
 		if ( req.method === 'HEAD' && path === '/' ) {
@@ -451,12 +640,55 @@ export async function startFixture(): Promise< Fixture > {
 				},
 				routes: {
 					'/': { namespace: '', methods: [ 'GET' ], endpoints: [] },
+					...( batchState.mode === 'absent'
+						? {}
+						: {
+								'/batch/v1': {
+									namespace: '',
+									methods: [ 'POST' ],
+									endpoints: [
+										{
+											methods: [ 'POST' ],
+											args: {
+												validation: {
+													type: 'string',
+													enum: [
+														'require-all-validate',
+														'normal',
+													],
+													default: 'normal',
+												},
+												requests: {
+													type: 'array',
+													maxItems:
+														batchState.maxItems,
+													required: true,
+													items: {
+														type: 'object',
+														properties: {
+															method: {
+																type: 'string',
+																enum: batchState.methods,
+																default: 'POST',
+															},
+															path: {
+																type: 'string',
+																required: true,
+															},
+														},
+													},
+												},
+											},
+										},
+									],
+								},
+						  } ),
 					'/wp/v2/widgets': {
 						namespace: 'wp/v2',
 						methods: [ 'GET', 'POST' ],
 						endpoints: [
-							{ methods: [ 'GET' ] },
-							{ methods: [ 'POST' ] },
+							{ methods: [ 'GET' ], allow_batch: { v1: true } },
+							{ methods: [ 'POST' ], allow_batch: { v1: true } },
 						],
 					},
 					// Paginated collections for `--per_page=-1` (fetch every
@@ -488,9 +720,12 @@ export async function startFixture(): Promise< Fixture > {
 						namespace: 'wp/v2',
 						methods: [ 'GET', 'PUT', 'DELETE' ],
 						endpoints: [
-							{ methods: [ 'GET' ] },
-							{ methods: [ 'PUT' ] },
-							{ methods: [ 'DELETE' ] },
+							{ methods: [ 'GET' ], allow_batch: { v1: true } },
+							{ methods: [ 'PUT' ], allow_batch: { v1: true } },
+							{
+								methods: [ 'DELETE' ],
+								allow_batch: { v1: true },
+							},
 						],
 					},
 					'/wp/v2/media': {
@@ -1349,6 +1584,14 @@ export async function startFixture(): Promise< Fixture > {
 			}
 			if ( req.method === 'DELETE' ) {
 				const existing = widgets.get( id );
+				if ( ! existing ) {
+					send( res, 404, {
+						code: 'rest_widget_invalid_id',
+						message: 'Invalid widget ID.',
+						data: { status: 404 },
+					} );
+					return;
+				}
 				widgets.delete( id );
 				send( res, 200, { deleted: true, previous: existing } );
 				return;

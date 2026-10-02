@@ -49,6 +49,7 @@ describe( 'parseCommandArgs', () => {
 				route: 'posts',
 				verb: 'get',
 				id: '42',
+				ids: [ '42' ],
 				fields: {},
 			}
 		);
@@ -81,6 +82,7 @@ describe( 'parseCommandArgs', () => {
 			route: 'posts',
 			verb: 'update',
 			id: '42',
+			ids: [ '42' ],
 			fields: { title: 'Hello' },
 		} );
 	} );
@@ -114,6 +116,7 @@ describe( 'parseCommandArgs', () => {
 			route: 'global-styles/themes',
 			verb: 'get',
 			id: 'twentytwentyfour',
+			ids: [ 'twentytwentyfour' ],
 			fields: {},
 		} );
 	} );

@@ -51,6 +51,21 @@ Endpoint arguments are formatted the way real WP-CLI presents its own `OPTIONS`:
 - A required argument is shown bare (`--title=<string>`, no brackets).
 - `default:`/`options:` blocks only appear when the schema actually declares them.
 - `update`/`generate` borrow the `create` (`POST`) schema for their argument list — WordPress doesn't expose a separate schema for the item-level `PUT` endpoint, so this is the closest available approximation. Don't be surprised if an `update`'s listed options include a field the item endpoint doesn't actually accept.
+- `get`/`update`/`delete` list their positional ids first, like WP-CLI does. They take one or more ids, so the synopsis shows `<id>...` (`exists` takes exactly one, `<id>`). A route whose URL parameter has another name shows that name instead, e.g. `<parent>...`.
+
+<!-- markdownlint-disable-next-line MD046 -->
+```text
+SYNOPSIS
+
+  wrapido wp/v2 posts delete <id>... [--force]
+
+OPTIONS
+
+  <id>...
+    One or more IDs of posts to delete.
+```
+
+`help <namespace> <route> <verb> --format=json` carries the same thing as `positional: {name, repeating, required, description}`.
 
 ## Listing children
 

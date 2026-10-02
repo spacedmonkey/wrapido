@@ -34,6 +34,13 @@ wrapido wp/v2 posts update 42 --status=draft --url=https://example.com
 # Delete
 wrapido wp/v2 posts delete 42 --force --url=https://example.com
 
+# Delete several posts at once (batched through /batch/v1 where the site allows it)
+wrapido wp/v2 posts delete 42 43 44 --url=https://example.com
+
+# Delete every draft: feed the ids from `list` straight into `delete`
+wrapido --url=https://example.com wp/v2 posts delete $(wrapido --url=https://example.com wp/v2 posts list \
+  --per_page=-1 --fields=id --format=ids --status=draft --quiet)
+
 # Check whether an item exists (exit code 0/1, no output payload needed)
 wrapido wp/v2 posts exists 42 --url=https://example.com
 

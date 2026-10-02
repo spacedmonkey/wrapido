@@ -10,13 +10,32 @@ import type { IndexResponse, Verb } from '../types.js';
  * @param apiRoot The resolved REST API root URL.
  * @return The parsed index response.
  */
-export async function fetchIndex(
+export function fetchIndex(
 	client: WpRestClient,
 	apiRoot: string
 ): Promise< IndexResponse > {
-	const { body } = await client.request< IndexResponse >( apiRoot );
-	return body;
+	// One fetch per client and root: the index is large, and a single command
+	// may need it several times (schema, param position, batch support).
+	let byRoot = indexCache.get( client );
+	if ( ! byRoot ) {
+		byRoot = new Map();
+		indexCache.set( client, byRoot );
+	}
+	let pending = byRoot.get( apiRoot );
+	if ( ! pending ) {
+		pending = client
+			.request< IndexResponse >( apiRoot )
+			.then( ( { body } ) => body );
+		pending.catch( () => byRoot.delete( apiRoot ) );
+		byRoot.set( apiRoot, pending );
+	}
+	return pending;
 }
+
+const indexCache = new WeakMap<
+	WpRestClient,
+	Map< string, Promise< IndexResponse > >
+>();
 
 /**
  * Splits a path into its top-level `/`-separated segments, the way
@@ -515,6 +534,35 @@ export function resolveRouteInfo(
 		}
 	}
 	return { path: exactPath, requiresParam: false };
+}
+
+/**
+ * The index key of the route that addresses one item of `route`, e.g.
+ * `/wp/v2/posts/(?P<id>[\d]+)` for `posts` — the route `get`/`update`/
+ * `delete <id>` actually hit, which {@link resolveRouteInfo} doesn't return
+ * when a bare collection route also exists.
+ * @param index     The site's root REST API index.
+ * @param namespace The route's namespace.
+ * @param route     The CLI route name.
+ * @return The item route's index key, or undefined if there is none.
+ */
+export function itemRouteKey(
+	index: IndexResponse,
+	namespace: string,
+	route: string
+): string | undefined {
+	const prefix = `/${ namespace }/`;
+	return Object.keys( index.routes ).find( ( path ) => {
+		if ( ! path.startsWith( prefix ) || ! path.includes( '(?P<' ) ) {
+			return false;
+		}
+		const parsed = splitPlaceholder( path.slice( prefix.length ) );
+		return (
+			!! parsed &&
+			parsed.paramIndex !== null &&
+			parsed.segments.join( '/' ) === route
+		);
+	} );
 }
 
 /**

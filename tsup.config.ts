@@ -4,7 +4,10 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig( {
-	entry: [ 'src/cli.ts' ],
+	// `src/bin.ts` is the executable (still dist/cli.js); it holds Node's
+	// warnings, then dynamically imports src/cli.ts, which tsup splits into
+	// its own chunk so the dependencies load only after that hold is in place.
+	entry: { cli: 'src/bin.ts' },
 	format: [ 'esm' ],
 	target: 'node20',
 	clean: true,
