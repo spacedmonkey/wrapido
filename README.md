@@ -35,8 +35,10 @@ To use `wrapido` as a global command instead of running it from inside this repo
 For local development, run commands directly against the TypeScript source without a build step:
 
 ```sh
-npm run wrapido -- <namespace> <route> [<verb>] [<id>] [--flag=value...] --url=<site>
+npm run -s wrapido -- <namespace> <route> [<verb>] [<id>] [--flag=value...] --url=<site>
 ```
+
+Keep `-s` so npm's own banner stays out of the output (it would break `--format=json` or `$(…)` captures), and put wrapido's flags after `--` so npm doesn't take them.
 
 ## Command grammar
 
@@ -163,7 +165,7 @@ See [Uploading files](https://spacedmonkey.github.io/wrapido/uploading-files/) f
 ## Development
 
 ```sh
-npm run wrapido -- <args>   # run against source via tsx, no build needed
+npm run -s wrapido -- <args>   # run against source via tsx, no build needed (-s: no npm banner in the output)
 npm run build          # bundle to dist/cli.js (tsup)
 npm test                # jest (unit, via wp-scripts) + vitest (an execa-driven integration suite against a local fixture server)
 npm run coverage        # merged unit + integration coverage report (coverage/) and README badge update
