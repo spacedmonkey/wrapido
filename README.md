@@ -145,6 +145,10 @@ wrapido wp/v2 posts update 42 --status=draft --url=https://example.com
 # Delete
 wrapido wp/v2 posts delete 42 --force --url=https://example.com
 
+# Delete every draft at once: several ids in one command, batched through /batch/v1
+wrapido --url=https://example.com wp/v2 posts delete $(wrapido --url=https://example.com wp/v2 posts list \
+  --per_page=-1 --fields=id --format=ids --status=draft --quiet)
+
 # Upload a file — the flag is whatever parameter the endpoint expects (`file` for core media)
 wrapido wp/v2 media create --file=./cat.jpg --title="Cat" --url=https://example.com
 

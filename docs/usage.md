@@ -79,6 +79,15 @@ Everything is read from the site's own REST index. No limits are hardcoded:
 -   **Which methods?** That's the route's method enum, `POST`/`PUT`/`PATCH`/`DELETE` in stock WordPress, so `get` is only batched on a site that adds `GET`.
 -   **Does this route allow it?** The route's endpoint for that method must say `allow_batch: {"v1": true}`. WordPress shows this in the index from 5.9. Core posts, pages, custom post types, terms, menus, widgets and (from 6.6) users opt in. Media, comments, settings and global styles don't.
 
+For example, to delete every draft post, feed the ids from `list` straight into `delete`. `--per_page=-1` fetches every page, `--format=ids` prints just the ids separated by spaces, and `--quiet` keeps notes out of the output:
+
+```sh
+wrapido --url=https://example.com wp/v2 posts delete $(wrapido --url=https://example.com wp/v2 posts list \
+  --per_page=-1 --fields=id --format=ids --status=draft --quiet)
+```
+
+Without `--force`, deleted posts go to the trash; add `--force` to delete them permanently. Running from a clone with `npm run`? Use `npm run -s wrapido -- …` for the inner command, or npm's banner ends up among the ids.
+
 `generate` always sends its first item on its own, so a missing required field fails fast with the usual error. The rest go in batches of `maxItems`, one batch at a time: 200 posts take 9 requests instead of 200. `--debug` logs why batching wasn't used for a run, and each batched item's status.
 
 **When a batch fails.** wrapido always prints the real cause (the HTTP status, plus WordPress's error code and message or the text of an HTML error page) and says what happened to each item:

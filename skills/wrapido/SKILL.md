@@ -58,6 +58,7 @@ For many items, pass several ids to one command instead of looping over single-i
 wrapido wp/v2 posts delete 12 34 56 --force                 # one /batch/v1 request where allowed
 wrapido wp/v2 posts update 12 34 56 --status=draft          # the same fields applied to every id
 wrapido wp/v2 posts list --status=draft --format=ids --per_page=-1   # ids to feed in
+wrapido wp/v2 posts delete $(wrapido wp/v2 posts list --status=draft --per_page=-1 --format=ids --quiet)   # every draft, after confirming
 wrapido wp/v2 posts generate --count=50 --status=draft      # first item alone, the rest batched
 ```
 
