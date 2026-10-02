@@ -7,7 +7,7 @@ tags:
 
 # Claude Code skill
 
-This repository ships a [Claude Code](https://claude.com/claude-code) skill, `wrapido`, that teaches Claude how to drive the CLI: to start in the `wp/v2` namespace and discover before acting, to always run in agent mode, how to authenticate with Application Passwords or OAuth2 (and to walk you through setting one up when a request needs it), `--per_page=-1` to fetch every item, file uploads, how to keep output small, safety rules (drafts by default, confirm before deleting), and the common gotchas. It builds on [Agent mode](agent-mode.md) and [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md), and is only knowledge: Claude still runs the real `wrapido` command, so the CLI must be installed too.
+This repository ships a [Claude Code](https://claude.com/claude-code) skill, `wrapido`, that teaches Claude how to drive the CLI: to start in the `wp/v2` namespace and discover before acting, to always run in agent mode, how to authenticate with Application Passwords or OAuth2 (and to walk you through setting one up when a request needs it), `--per_page=-1` to fetch every item, bulk changes with several ids (batched through `/batch/v1`) and how to read partial failures, file uploads, how to keep output small, safety rules (drafts by default, confirm before deleting), and the common gotchas. It builds on [Agent mode](agent-mode.md) and [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md), and is only knowledge: Claude still runs the real `wrapido` command, so the CLI must be installed too.
 
 ## 1. Install the CLI
 
