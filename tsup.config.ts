@@ -10,6 +10,11 @@ export default defineConfig( {
 	entry: { cli: 'src/bin.ts' },
 	format: [ 'esm' ],
 	target: 'node20',
+	// ora's cli-spinners does `import ... with {type: 'json'}`, which Node 20
+	// reports as "ExperimentalWarning: Importing JSON modules". Bundling ora
+	// (and so its transitive cli-spinners) inlines the JSON. ora is a
+	// devDependency for the same reason: the published dist never imports it.
+	noExternal: [ 'ora' ],
 	clean: true,
 	dts: false,
 	// Only emit a sourcemap when collecting coverage (`npm run coverage`) —

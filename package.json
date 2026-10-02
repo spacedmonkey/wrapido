@@ -41,7 +41,6 @@
 		"conf": "^15.1.0",
 		"flat": "^6.0.1",
 		"json-2-csv": "^5.5.9",
-		"ora": "^9.4.1",
 		"picocolors": "^1.1.1",
 		"table": "^6.9.0",
 		"yaml": "^2.9.0"
@@ -58,6 +57,7 @@
 		"execa": "^9.5.2",
 		"istanbul-badges-readme": "^1.9.0",
 		"jest": "^30.5.1",
+		"ora": "^9.4.1",
 		"prettier": "npm:wp-prettier@^3.0.3",
 		"ts-jest": "^29.4.12",
 		"tsup": "^8.3.5",
