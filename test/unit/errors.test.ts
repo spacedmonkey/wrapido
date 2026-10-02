@@ -75,6 +75,19 @@ describe( 'parseErrorResponse', () => {
 } );
 
 describe( 'formatErrorForDisplay', () => {
+	it( 'leaves the hint out when asked', () => {
+		const error = new WpApiError(
+			{ code: 'rest_post_invalid_id', message: 'Invalid post ID.' },
+			404
+		);
+		expect( formatErrorForDisplay( error ) ).toContain(
+			'No item has that id'
+		);
+		expect( formatErrorForDisplay( error, { hint: false } ) ).toBe(
+			'Error: Invalid post ID. (rest_post_invalid_id, status 404)'
+		);
+	} );
+
 	it( 'appends a hint to upload errors', () => {
 		const error = new WpApiError(
 			{ code: 'rest_upload_no_data', message: 'No data supplied.' },

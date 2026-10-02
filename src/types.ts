@@ -48,6 +48,8 @@ export interface EndpointArgSchema {
 export interface RouteEndpoint {
 	methods: string[];
 	args?: Record< string, EndpointArgSchema >;
+	/** Whether this endpoint can be part of a `/batch/v1` request (WP 5.9+). */
+	allow_batch?: { v1?: boolean } | false;
 	[ key: string ]: unknown;
 }
 

@@ -63,6 +63,7 @@ import {
 	colorByDefault,
 	pc,
 	setColorEnabled,
+	setDebugOutput,
 } from './ui.js';
 
 const CONTEXTS: Context[] = [ 'view', 'edit', 'embed' ];
@@ -557,6 +558,7 @@ run "wrapido <namespace> <route>" to see which ones a given route supports.
 			options = applyFileConfig( rawOptions );
 			setColorEnabled( options.color && colorByDefault() );
 			setTruncateLength( parseTruncateLength( options.truncateLength ) );
+			setDebugOutput( Boolean( options.debug ) );
 			if ( args[ 0 ] === 'config' ) {
 				if ( options.help ) {
 					await printOutput(

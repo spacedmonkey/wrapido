@@ -34,15 +34,20 @@ export class WpApiError extends Error {
 /** Raised when the CLI itself can't proceed (bad args, discovery failure, etc.), not a REST API error. */
 export class CliError extends Error {
 	readonly headers?: Headers;
+	readonly status?: number;
+	/** A CLI-added hint, set by the caller after construction. */
+	hint?: string;
 
 	/**
 	 * @param message The human-readable error message.
 	 * @param headers The failed response's headers, if the error came from one.
+	 * @param status  The failed response's HTTP status, if the error came from one.
 	 */
-	constructor( message: string, headers?: Headers ) {
+	constructor( message: string, headers?: Headers, status?: number ) {
 		super( message );
 		this.name = 'CliError';
 		this.headers = headers;
+		this.status = status;
 	}
 }
 
@@ -73,6 +78,8 @@ const GENERAL_ERROR_HINTS: Record< string, string > = {
 	rest_post_invalid_id: 'No item has that id; run `list` to find valid ids.',
 	rest_invalid_param:
 		'A field value is invalid: run `wrapido help <namespace> <route> <verb>` for the accepted fields and types.',
+	rest_batch_not_allowed:
+		"This route doesn't allow batch requests; wrapido sends them individually.",
 };
 
 /**
@@ -99,7 +106,7 @@ export function hintFor( code: string ): string | undefined {
  * @param html The raw response text.
  * @return The text content, whitespace-collapsed.
  */
-function stripHtml( html: string ): string {
+export function stripHtml( html: string ): string {
 	return html
 		.replace( /<(script|style)[\s\S]*?<\/\1>/gi, ' ' )
 		.replace( /<[^>]*>/g, ' ' )
@@ -133,7 +140,8 @@ export async function parseErrorResponse(
 	if ( response.status === 413 ) {
 		return new CliError(
 			'The server rejected the request body as too large (HTTP 413). Check the web server (client_max_body_size) and PHP (upload_max_filesize, post_max_size) upload limits.',
-			response.headers
+			response.headers,
+			413
 		);
 	}
 	const detail = /<\/?[a-z][\s\S]*>/i.test( text ) ? stripHtml( text ) : text;
@@ -141,32 +149,48 @@ export async function parseErrorResponse(
 		`Request failed with status ${ response.status }${
 			detail ? `: ${ detail.slice( 0, 500 ) }` : ''
 		}`,
-		response.headers
+		response.headers,
+		response.status
 	);
 }
 
 /**
  * Renders any caught error as a single "Error: ..." line for the top-level CLI catch.
- * @param error The caught value, of any shape.
+ * @param error        The caught value, of any shape.
+ * @param options      Rendering options.
+ * @param options.hint Whether to append the error's hint (default true);
+ *                     multi-item runs print each distinct hint once instead.
  * @return A human-readable, one-line error message.
  */
-export function formatErrorForDisplay( error: unknown ): string {
+export function formatErrorForDisplay(
+	error: unknown,
+	{ hint: withHint = true }: { hint?: boolean } = {}
+): string {
+	const hint = withHint ? errorHint( error ) : undefined;
+	const hintLine = hint ? `\n${ hint }` : '';
 	if ( error instanceof WpApiError ) {
-		const hint = error.hint ?? hintFor( error.code );
 		const params = Object.entries( error.params ?? {} )
 			.map( ( [ name, message ] ) => `\n  ${ name }: ${ message }` )
 			.join( '' );
-		return `Error: ${ error.message } (${ error.code }, status ${
-			error.status
-		})${ params }${ hint ? `\n${ hint }` : '' }`;
-	}
-	if ( error instanceof CliError ) {
-		return `Error: ${ error.message }`;
+		return `Error: ${ error.message } (${ error.code }, status ${ error.status })${ params }${ hintLine }`;
 	}
 	if ( error instanceof Error ) {
-		return `Error: ${ error.message }`;
+		return `Error: ${ error.message }${ hintLine }`;
 	}
 	return `Error: ${ String( error ) }`;
+}
+
+/**
+ * The hint to show for an error: one set on the error itself, else (for a
+ * WordPress error) the code-keyed one from {@link hintFor}.
+ * @param error The caught value, of any shape.
+ * @return The hint text, if any.
+ */
+export function errorHint( error: unknown ): string | undefined {
+	if ( error instanceof WpApiError ) {
+		return error.hint ?? hintFor( error.code );
+	}
+	return error instanceof CliError ? error.hint : undefined;
 }
 
 /**
@@ -185,6 +209,11 @@ export function formatErrorForJson( error: unknown ): string {
 				params: error.params,
 				hint: error.hint ?? hintFor( error.code ),
 			},
+		} );
+	}
+	if ( error instanceof CliError ) {
+		return JSON.stringify( {
+			error: { message, status: error.status, hint: error.hint },
 		} );
 	}
 	return JSON.stringify( { error: { message } } );

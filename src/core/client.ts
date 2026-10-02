@@ -9,7 +9,12 @@ import { addQueryArgs } from '@wordpress/url';
 import type { WpApiErrorBody } from '../types.js';
 import type { AuthProvider } from './auth/types.js';
 import { debugLog, redactBody, redactHeaders } from './debug.js';
-import { CliError, parseErrorResponse, WpApiError } from './errors.js';
+import {
+	CliError,
+	parseErrorResponse,
+	stripHtml,
+	WpApiError,
+} from './errors.js';
 import { timedFetch } from './timeout.js';
 
 /** Default timeout for an API request, in milliseconds (override with `--timeout`). */
@@ -29,7 +34,8 @@ export interface WpResponse< T = unknown > {
 	body: T;
 }
 
-interface Envelope {
+/** A WordPress `{ body, status, headers }` response envelope (`_envelope`, or one batch item). */
+export interface Envelope {
 	body: unknown;
 	status: number;
 	headers: Record< string, unknown >;
@@ -94,8 +100,20 @@ async function unwrapEnvelope< T >(
 	debugLog( `  envelope status: ${ envelope.status }` );
 	logHeaders( all );
 
+	return responseFromEnvelope< T >( envelope );
+}
+
+/**
+ * Converts an envelope into the response it describes, or throws the same
+ * typed error a real 4xx/5xx would.
+ * @param envelope The `{ body, status, headers }` wrapper.
+ * @return The unwrapped response.
+ */
+export function responseFromEnvelope< T = unknown >(
+	envelope: Envelope
+): WpResponse< T > {
 	const headers = new Headers();
-	for ( const [ key, value ] of Object.entries( envelope.headers ) ) {
+	for ( const [ key, value ] of Object.entries( envelope.headers ?? {} ) ) {
 		try {
 			headers.set( key, String( value ) );
 		} catch {
@@ -116,7 +134,8 @@ async function unwrapEnvelope< T >(
 		}
 		throw new CliError(
 			`Request failed with status ${ envelope.status }`,
-			headers
+			headers,
+			envelope.status
 		);
 	}
 	return {
@@ -234,7 +253,20 @@ export class WpRestClient {
 		}
 
 		const text = await response.text();
-		const parsed: unknown = text ? JSON.parse( text ) : undefined;
+		let parsed: unknown;
+		try {
+			parsed = text ? JSON.parse( text ) : undefined;
+		} catch {
+			// e.g. a firewall's HTML page, or PHP notices printed before the JSON.
+			const detail = stripHtml( text ).slice( 0, 500 );
+			throw new CliError(
+				`Expected JSON but got a non-JSON response (status ${
+					response.status
+				})${ detail ? `: ${ detail }` : '' }`,
+				response.headers,
+				response.status
+			);
+		}
 		if ( envelope && isEnvelope( parsed ) ) {
 			return await unwrapEnvelope< T >( parsed, response.headers );
 		}

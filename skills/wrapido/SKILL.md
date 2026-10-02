@@ -47,7 +47,9 @@ wrapido wp/v2 posts update 42 --body='{"content":"..."}'   # --body for nested o
 wrapido wp/v2 posts exists 42
 ```
 
-Verbs: `list`, `get <id>`, `create`, `update <id>`, `delete <id> [--force]`, `exists <id>`, `generate --count=<n>`, `meta <add|update|get|list|delete|patch|pluck|clean-duplicates> <id> ...`.
+Verbs: `list`, `get <id>...`, `create`, `update <id>...`, `delete <id>... [--force]`, `exists <id>`, `generate --count=<n>`, `meta <add|update|get|list|delete|patch|pluck|clean-duplicates> <id> ...`.
+
+Several ids in one command (`delete 12 34 56`, `update 12 34 --status=draft`) go through WordPress's `/batch/v1` endpoint when the site allows it, else one request each. Exit `1` means at least one item failed: stdout still lists what succeeded, and each failure is a JSON line on stderr with its `id` (or `index` for `generate`). `"outcome":"unknown"` means those items may or may not exist, so check with `get`/`list` before retrying, especially creates.
 
 ## Getting everything: `--per_page=-1`
 

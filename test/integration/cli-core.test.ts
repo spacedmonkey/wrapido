@@ -103,16 +103,16 @@ it( 'shows a WP-CLI-style usage synopsis covering every verb', async () => {
 		'usage: wrapido wp/v2 widgets list [--context=<context>] [--per_page=<per_page>]'
 	);
 	expect( lines[ 1 ] ).toBe(
-		'   or: wrapido wp/v2 widgets get <id> [--context=<context>]'
+		'   or: wrapido wp/v2 widgets get <id>... [--context=<context>]'
 	);
 	expect( lines[ 2 ] ).toBe(
 		'   or: wrapido wp/v2 widgets create --title=<title> [--content=<content>] [--meta=<meta>] [--<field>=<value>]'
 	);
 	expect( lines[ 3 ] ).toBe(
-		'   or: wrapido wp/v2 widgets update <id> --title=<title> [--content=<content>] [--meta=<meta>] [--<field>=<value>]'
+		'   or: wrapido wp/v2 widgets update <id>... --title=<title> [--content=<content>] [--meta=<meta>] [--<field>=<value>]'
 	);
 	expect( lines[ 4 ] ).toBe(
-		'   or: wrapido wp/v2 widgets delete <id> [--force]'
+		'   or: wrapido wp/v2 widgets delete <id>... [--force]'
 	);
 	expect( lines[ 5 ] ).toBe( '   or: wrapido wp/v2 widgets exists <id>' );
 	expect( lines[ 6 ] ).toBe(
