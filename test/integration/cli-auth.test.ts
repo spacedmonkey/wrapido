@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { existsSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -419,12 +419,48 @@ describe( 'config store location', () => {
 				{ env: { WRAPIDO_CONFIG_DIR: dir } }
 			);
 			expect( set.exitCode ).toBe( 0 );
-			expect(
-				dirname( await configFilePath( { WRAPIDO_CONFIG_DIR: dir } ) )
-			).toBe( dir );
-			expect( existsSync( join( dir, 'credential-key' ) ) ).toBe( true );
+			const storePath = await configFilePath( {
+				WRAPIDO_CONFIG_DIR: dir,
+			} );
+			expect( storePath ).toBe( join( dir, 'credentials.json' ) );
+			const keyPath = join( dir, 'credential-key' );
+			expect( existsSync( keyPath ) ).toBe( true );
+			if ( process.platform !== 'win32' ) {
+				// Owner-only, like ~/.ssh.
+				expect( statSync( storePath ).mode.toString( 8 ) ).toMatch(
+					/600$/
+				);
+				expect( statSync( keyPath ).mode.toString( 8 ) ).toMatch(
+					/600$/
+				);
+			}
 		} finally {
 			await rm( dir, { recursive: true, force: true } );
+		}
+	} );
+
+	it( 'defaults to ~/.wrapido/credentials.json on every OS', async () => {
+		const home = await mkdtemp( join( tmpdir(), 'wrapido-home-it-' ) );
+		try {
+			const env = {
+				// No override: the store must land in the home directory.
+				WRAPIDO_CONFIG_DIR: undefined,
+				HOME: home,
+				USERPROFILE: home,
+			} as unknown as Record< string, string >;
+			const set = await runCli(
+				[ 'config', 'set', '--url=https://example.com', '--quiet' ],
+				{ env }
+			);
+			expect( set.exitCode ).toBe( 0 );
+			expect( await configFilePath( env ) ).toBe(
+				join( home, '.wrapido', 'credentials.json' )
+			);
+			expect(
+				existsSync( join( home, '.wrapido', 'credential-key' ) )
+			).toBe( true );
+		} finally {
+			await rm( home, { recursive: true, force: true } );
 		}
 	} );
 

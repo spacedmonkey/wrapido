@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import Conf from 'conf';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 /**
  * Internal dependencies
@@ -385,6 +385,7 @@ describe( 'legacy sites shape migration', () => {
 		const rawStore = new Conf< { sites?: Record< string, unknown > } >( {
 			projectName: 'wrapido',
 			cwd: configDir,
+			configName: basename( configModule.configFilePath(), '.json' ),
 			encryptionKey,
 		} );
 		const existingSites = rawStore.get( 'sites' ) ?? {};

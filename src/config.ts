@@ -2,7 +2,6 @@
  * External dependencies
  */
 import Conf from 'conf';
-import envPaths from 'env-paths';
 import { randomBytes } from 'node:crypto';
 import {
 	existsSync,
@@ -13,6 +12,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from 'node:fs';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 /**
@@ -74,22 +74,21 @@ interface StoredConfig {
 	sites?: Record< string, PerSiteCredentials >;
 }
 
-// This module resolves its own config directory (rather than letting `conf`
-// pick its own default) so it can also place the encryption key file inside
-// it, next to but separate from the config data — `conf` itself uses
-// `env-paths` internally for this same resolution, so passing `cwd`
-// explicitly here just makes that directory choice visible to this file too.
-// `WRAPIDO_CONFIG_DIR` overrides it on every OS. `env-paths` only honours
-// `XDG_CONFIG_HOME` on Linux (macOS and Windows always use their own
-// locations), so it can't be used to isolate a run, e.g. the test suites.
+// The store lives in the user's own `~/.wrapido/` on every OS (like
+// `~/.ssh`), next to the hand-edited `~/.wrapido/config.yml`: the encrypted
+// data in `credentials.json` and its key in `credential-key`, both readable by
+// the owner only. This module picks the directory itself (rather than letting
+// `conf` choose an OS-specific one) so the key file sits beside the data.
+// `WRAPIDO_CONFIG_DIR` overrides it, e.g. to give a script or a test run its
+// own throwaway store.
 const configDir =
-	process.env.WRAPIDO_CONFIG_DIR ||
-	envPaths( 'wrapido', { suffix: '' } ).config;
+	process.env.WRAPIDO_CONFIG_DIR || join( homedir(), '.wrapido' );
 const keyFilePath = join( configDir, 'credential-key' );
+const STORE_NAME = 'credentials';
 
 /**
  * Loads the per-machine encryption key from disk, generating one on first
- * use. Storing the key in its own file — separate from config.json — means a
+ * use. Storing the key in its own file — separate from credentials.json — means a
  * leaked or copied config file alone can't be decrypted; the key file also
  * has to be obtained. This does not protect against something that already
  * has full read access to the same account (e.g. another process running as
@@ -100,7 +99,7 @@ function loadOrCreateEncryptionKey(): string {
 	try {
 		return readFileSync( keyFilePath, 'utf8' ).trim();
 	} catch {
-		mkdirSync( configDir, { recursive: true } );
+		mkdirSync( configDir, { recursive: true, mode: 0o700 } );
 		const key = randomBytes( 32 ).toString( 'hex' );
 		try {
 			// 'wx': fail if the file already exists — guards a race between two
@@ -128,7 +127,13 @@ function confOptions(
 	cwd: string,
 	encryptionKey: string
 ): ConstructorParameters< typeof Conf< StoredConfig > >[ 0 ] {
-	return { projectName: 'wrapido', cwd, encryptionKey };
+	return {
+		projectName: 'wrapido',
+		cwd,
+		configName: STORE_NAME,
+		configFileMode: 0o600,
+		encryptionKey,
+	};
 }
 
 /**
@@ -151,7 +156,7 @@ function createStore(): Conf< StoredConfig > {
 			confOptions( configDir, loadOrCreateEncryptionKey() )
 		);
 	} catch ( error ) {
-		const realConfigFilePath = join( configDir, 'config.json' );
+		const realConfigFilePath = join( configDir, `${ STORE_NAME }.json` );
 		if ( existsSync( realConfigFilePath ) ) {
 			const backupPath = `${ realConfigFilePath }.unreadable-${ Date.now() }`;
 			try {
@@ -212,7 +217,7 @@ let store = createStore();
  * rather than caching in memory) — verified empirically. That's why the
  * module-level `store` binding has to be repointed at a freshly-constructed
  * instance here rather than just writing the decrypted snapshot back through
- * the OLD `store` object: that would just re-encrypt config.json under the
+ * the OLD `store` object: that would just re-encrypt credentials.json under the
  * OLD key again (an instance's encryptionKey can't be changed after
  * construction), silently undoing the rotation on disk while leaving the
  * just-written new key file unable to decrypt it.
