@@ -27,14 +27,21 @@ url: https://example.com
 
 ## 2. Authenticate headlessly
 
-`auth ... login` opens a browser: humans only. Instead:
+Two types: **Application Passwords** (WordPress core, start here) and **OAuth2** (only with the WP-API/OAuth2 plugin). Headless options:
 
 -   Env vars `WP_USERNAME` + `WP_PASSWORD` (a WordPress Application Password). Preferred: `--password` leaks into shell history and `ps`.
--   Or store once: `wrapido auth application-passwords add <url> --username=<u> --password=<app-password>`.
+-   Or store once: `wrapido auth application-passwords add <url> --username="$WP_USERNAME" --password="$WP_PASSWORD"`.
+-   OAuth2 (needs HTTPS except on localhost): `wrapido auth oauth2 add <url> --client-id=<id> --client-secret="$SECRET"` (`client_credentials`; the Application must be created by hand in wp-admin with "Client Credentials Grant" enabled; acts as user 0, so no drafts or `--context=edit`), or `wrapido auth oauth2 add <url> --token="$TOKEN"` for a personal access token (a real user).
 
-Stored credentials are used **implicitly** for that site. Use `--use-auth=none` to see what an anonymous visitor sees. An OAuth2 `client_credentials` token acts as user 0, so drafts and `--context=edit` still need a real user.
+`auth ... login` prints a URL and waits for a callback on `127.0.0.1`, so a human must open it in a browser on the same machine: ask the user to run it.
+
+Stored credentials are used **implicitly** for that site; `wrapido auth <type> list` shows them (JSON). Use `--use-auth=none` to see what an anonymous visitor sees, and `--use-auth=<type>` when a site has both types stored (otherwise the request fails, unless `--username`/`--password` or `WP_USERNAME`/`WP_PASSWORD` are set, which win). Check auth with `wrapido wp/v2 users get me`.
+
+On an error with `status` 401 (or a logged-out `rest_invalid_param` "Status is forbidden" for drafts), stop and guide the user through setting up auth. A 403 means the user is logged in but lacks the capability; don't push a new login.
 
 ## 3. Best workflow: discover, then act
+
+Almost all WordPress core functionality (posts, pages, media, users, comments, terms, settings, plugins, themes) is in `wp/v2`: start there, and list namespaces only for a plugin's own API.
 
 ```sh
 wrapido                                # namespaces
@@ -56,6 +63,7 @@ Nested routes (e.g. `posts revisions`) appear in a route's `children` array, and
 Tips for fewer calls:
 
 -   Prefer `help <ns> <route> <verb> --format=json` over the bare route call; each endpoint carries a `required` array of arg names.
+-   "All posts": `list --per_page=-1 --fields=...` fetches every page in one command (check `--format=count` first on a big site). Logged out it returns published items only; add auth and `--status=any` for everything.
 -   Cheap counts: `list --format=count --per_page=1` prints the site total.
 -   To embed related data: `--_embed=true --fields=id,_embedded`.
 
@@ -70,10 +78,11 @@ Tips for fewer calls:
 -   Any `--name=value` that isn't a global flag is sent as a WordPress field/query arg. Reserved names: `url username password client-id client-secret token use-auth context format fields field body timeout color pager truncate-length quiet debug help`; use `--body` if an API field collides.
 -   `list --format=count` prints the site total (`X-WP-Total`) when sent, else the rows returned. Default `--per_page` is 10 (the route's max, usually 100), newest first. When more pages exist, stderr says `Page 1 of N (T total)`; use `--page=N`, or `--per_page=-1` to get every page in one go (it ignores `--page`, and count never needs it).
 -   `exists <id>` exits `1` for "not found" and still prints `{"exists":false}` on stdout. An unknown route or namespace exits `1` with `No such route`/`No such namespace` (a JSON error in agent mode).
--   `--format=raw` is Node-inspect text, not JSON. `auth ... login` needs a browser (humans only).
+-   `--format=raw` is Node-inspect text, not JSON.
+-   `wp/v2 settings` has no item route: read with `list`, change with `create --<setting>=...`.
 -   Nested routes are separate words: `wrapido wp/v2 posts revisions get <post-id>`.
 -   `types`, `taxonomies`, `statuses` list one row per entry, so `--fields=slug,name` works.
--   Uploads: the flag is the endpoint's own parameter name (`--file=/path/img.png` (a path or `http(s)://` URL) for core media).
+-   Uploads: the flag is the endpoint's own parameter name: `wrapido wp/v2 media create --file=./img.png --alt_text=...` (a path or `http(s)://` URL; repeat `--file` for a batch). Featured image: upload, then `posts update <id> --featured_media=<media-id>`. Needs `upload_files`.
 -   `--debug` logs every HTTP request (credentials redacted) to stderr.
 -   HTTPS certificates are **not verified**; don't use real credentials on untrusted networks.
 

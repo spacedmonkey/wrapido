@@ -7,7 +7,7 @@ tags:
 
 # Claude Code skill
 
-This repository ships a [Claude Code](https://claude.com/claude-code) skill, `wrapido`, that teaches Claude how to drive the CLI: the discover-then-act workflow, headless authentication, how to keep output small, safety rules (drafts by default, confirm before deleting), and the common gotchas. It builds on [Agent mode](agent-mode.md) and [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md), and is only knowledge: Claude still runs the real `wrapido` command, so the CLI must be installed too.
+This repository ships a [Claude Code](https://claude.com/claude-code) skill, `wrapido`, that teaches Claude how to drive the CLI: to start in the `wp/v2` namespace and discover before acting, to always run in agent mode, how to authenticate with Application Passwords or OAuth2 (and to walk you through setting one up when a request needs it), `--per_page=-1` to fetch every item, file uploads, how to keep output small, safety rules (drafts by default, confirm before deleting), and the common gotchas. It builds on [Agent mode](agent-mode.md) and [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md), and is only knowledge: Claude still runs the real `wrapido` command, so the CLI must be installed too.
 
 ## 1. Install the CLI
 
@@ -71,6 +71,8 @@ Put the site in a `wrapido.yml` in your project so Claude doesn't have to repeat
 url: https://example.com
 ```
 
+If the site uses the [OAuth2](authentication-oauth2.md) plugin instead, store a credential once with `wrapido auth oauth2 add` or `login`. If you skip this step, Claude asks which type you want and walks you through it the first time a request needs auth (drafts, private content, settings, any write, or a `401` error).
+
 Agent mode switches on by itself inside Claude Code, so there is nothing else to configure. Check with `wrapido --debug`, which prints `agent mode: on (CLAUDECODE)`.
 
 !!! warning "Project files are trusted input"
@@ -85,8 +87,10 @@ Claude loads the skill on its own when you ask for something WordPress-related. 
 - "Upload `./cat.jpg` to the media library and set its alt text."
 - "Which custom post types and taxonomies does this site register?"
 - "Find posts missing a featured image."
+- "Get the titles of all published posts." (uses `list --per_page=-1`)
+- "Upload `./logo.png` and set it as post 12's featured image."
 
-Claude will typically run `wrapido help <namespace> <route> <verb> --format=json` first to read the live schema, then run the real command with `--fields` to keep the output small. It creates content as `draft`, shows what will change before an `update` or `delete`, and asks before bulk or irreversible work.
+Claude goes straight to the `wp/v2` namespace for core content and will typically run `wrapido help <namespace> <route> <verb> --format=json` first to read the live schema, then run the real command with `--fields` to keep the output small. It creates content as `draft`, shows what will change before an `update` or `delete`, and asks before bulk or irreversible work.
 
 ## Permissions
 

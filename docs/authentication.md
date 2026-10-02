@@ -5,7 +5,7 @@ tags:
 
 # Authentication
 
-`wrapido` supports two authentication mechanisms, on equal footing — `<type>` isn't optional flourish, it's how the CLI tells them apart, both in the command grammar (`wrapido auth <type> ...`) and in the same vocabulary WordPress (and any plugin it delegates to) itself uses: each type's name is the exact key the site's REST API root index reports that feature under in its `authentication` object. Run `wrapido --url=<site>` to see which ones a target site actually advertises.
+`wrapido` supports two authentication mechanisms, on equal footing — `<type>` isn't optional flourish, it's how the CLI tells them apart, both in the command grammar (`wrapido auth <type> ...`) and in the same vocabulary WordPress (and any plugin it delegates to) itself uses: each type's name is the exact key the site's REST API root index reports that feature under in its `authentication` object. Run `wrapido --url=<site> --format=table` to see whether a site advertises Application Passwords; OAuth2 support isn't listed there, but `wrapido auth oauth2 login`/`add` check for it and fail with a clear error if it's missing.
 
 <!-- markdownlint-disable MD046 -->
 

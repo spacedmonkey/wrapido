@@ -67,12 +67,13 @@ These help agents but are available to everyone:
 
 ## Authentication for agents
 
-`auth ... login` opens a browser, so it is for humans. Headless options:
+`auth ... login` prints a URL and waits for a callback on `127.0.0.1`, so a person has to open it in a browser on the same machine. Headless options:
 
 -   `WP_USERNAME` + `WP_PASSWORD` environment variables (a WordPress [Application Password](authentication-application-passwords.md)) — preferred, since `--password` leaks into shell history and the process list.
--   Store once with `wrapido auth application-passwords add <url> --username=<u> --password=<app-password>`.
+-   Store once with `wrapido auth application-passwords add <url> --username="$WP_USERNAME" --password="$WP_PASSWORD"`.
+-   [OAuth2](authentication-oauth2.md), on a site running the WP-API/OAuth2 plugin: `wrapido auth oauth2 add <url> --client-id=<id> --client-secret=<secret>` (`client_credentials`), or `wrapido auth oauth2 add <url> --token=<token>` for a personal access token.
 
-Stored credentials are used implicitly for that site. Use `--use-auth=none` to see what an anonymous visitor sees. An OAuth2 `client_credentials` token acts as user 0, so drafts and `--context=edit` still need a real user.
+Stored credentials are used implicitly for that site; `wrapido auth <type> list` prints them as JSON. Use `--use-auth=none` to see what an anonymous visitor sees. An OAuth2 `client_credentials` token acts as user 0, so drafts and `--context=edit` still need a real user.
 
 ## Recommended setup
 

@@ -282,7 +282,7 @@ async function handleList( flags: GlobalFlags ): Promise< AuthResult > {
 	if ( ! sites.length ) {
 		return {
 			output: pc.dim(
-				`No stored credentials. Use "wrapido auth ${ OAUTH2_AUTH_TYPE } login <url> client-id=<id>" or "wrapido auth ${ OAUTH2_AUTH_TYPE } add <url> client-id=<id> client-secret=<secret>".`
+				`No stored credentials. Use "wrapido auth ${ OAUTH2_AUTH_TYPE } login <url> --client-id=<id>" or "wrapido auth ${ OAUTH2_AUTH_TYPE } add <url> --client-id=<id> --client-secret=<secret>".`
 			),
 			exitCode: 0,
 		};
@@ -405,7 +405,7 @@ function handleStatus(): AuthResult {
 					})`
 			  )
 			: pc.dim(
-					`no stored OAuth2 credential for this site — run "wrapido auth ${ OAUTH2_AUTH_TYPE } login <url> client-id=<id>" or "wrapido auth ${ OAUTH2_AUTH_TYPE } add <url> client-id=<id> client-secret=<secret>".`
+					`no stored OAuth2 credential for this site — run "wrapido auth ${ OAUTH2_AUTH_TYPE } login <url> --client-id=<id>" or "wrapido auth ${ OAUTH2_AUTH_TYPE } add <url> --client-id=<id> --client-secret=<secret>".`
 			  ),
 	];
 	return { output: lines.join( '\n' ), exitCode: 0 };

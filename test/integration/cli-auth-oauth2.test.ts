@@ -226,6 +226,9 @@ describe( 'oauth2', () => {
 
 		const list = await runOAuth2( [ 'auth', 'list', '--format=json' ] );
 		expect( list.stdout ).toContain( 'No stored credentials' );
+		// The suggested command must use the flag spelling the parser accepts.
+		expect( list.stdout ).toContain( 'login <url> --client-id=<id>' );
+		expect( list.stdout ).not.toMatch( / client-id=<id>/ );
 
 		const skipped = await runOAuth2( [
 			'auth',
