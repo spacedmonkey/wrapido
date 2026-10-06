@@ -55,8 +55,8 @@ export const BATCH_TIMEOUT_MS = 110_000;
 export function batchCapabilities(
 	index: IndexResponse
 ): BatchCapabilities | undefined {
-	const endpoint = index.routes?.[ '/batch/v1' ]?.endpoints?.find(
-		( e ) => e.methods?.includes( 'POST' )
+	const endpoint = index.routes?.[ '/batch/v1' ]?.endpoints?.find( ( e ) =>
+		e.methods?.includes( 'POST' )
 	);
 	if ( ! endpoint ) {
 		return undefined;
@@ -102,8 +102,8 @@ export function canBatch(
 	if ( ! caps.methods.includes( method ) ) {
 		return false;
 	}
-	const endpoint = index.routes?.[ routeKey ]?.endpoints?.find(
-		( e ) => e.methods?.includes( method )
+	const endpoint = index.routes?.[ routeKey ]?.endpoints?.find( ( e ) =>
+		e.methods?.includes( method )
 	);
 	const allowBatch = endpoint?.allow_batch;
 	return !! allowBatch && allowBatch.v1 === true;

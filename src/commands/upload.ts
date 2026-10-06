@@ -265,7 +265,7 @@ export async function runUploadCommand(
 							apiRoot,
 							response,
 							flags
-					  )
+						)
 					: undefined;
 			followedAny ||= !! followed;
 			return followed ? followed.body : response.body;
@@ -388,7 +388,7 @@ export async function runUploadCommand(
 					? `Success: ${ verbLabel } ${ opts.route } ${ ids }.`
 					: `Success: ${ verbLabel.toLowerCase() } ${
 							created.length
-					  } ${ opts.route }: ${ ids }`
+						} ${ opts.route }: ${ ids }`
 			),
 			exitCode,
 		};

@@ -55,12 +55,12 @@ Notice: wp/my-plugin/v1 things doesn't declare page/per_page in its schema — s
 
 ## Interactions with other flags
 
-| Flag/format            | Behavior with `--per_page=-1`                                                                                           |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `--page=<n>`             | Ignored, with a stderr notice — a page number is meaningless once every page is being fetched.                          |
-| `--format=count`        | Skips the fetch-all loop entirely: one request for page 1, and the count comes from the `X-WP-Total` response header.    |
-| `--per_page` below `-1` | Rejected locally before any request is sent: `--per_page must be -1 (all pages) or a positive integer.`                 |
-| `--quiet`                | Hides the progress bar/spinner; the pages are still fetched.                                                            |
+| Flag/format             | Behavior with `--per_page=-1`                                                                                         |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `--page=<n>`            | Ignored, with a stderr notice — a page number is meaningless once every page is being fetched.                        |
+| `--format=count`        | Skips the fetch-all loop entirely: one request for page 1, and the count comes from the `X-WP-Total` response header. |
+| `--per_page` below `-1` | Rejected locally before any request is sent: `--per_page must be -1 (all pages) or a positive integer.`               |
+| `--quiet`               | Hides the progress bar/spinner; the pages are still fetched.                                                          |
 
 ## Ordinary (non-`-1`) pagination
 

@@ -30,5 +30,4 @@ export const OAUTH2_AUTH_TYPE = 'oauth2';
  * enforced by TypeScript's exhaustiveness checking, not just a comment.
  */
 export type AuthType =
-	| typeof APPLICATION_PASSWORDS_AUTH_TYPE
-	| typeof OAUTH2_AUTH_TYPE;
+	typeof APPLICATION_PASSWORDS_AUTH_TYPE | typeof OAUTH2_AUTH_TYPE;

@@ -152,13 +152,13 @@ export async function runItems(
 				? JSON.stringify( {
 						...JSON.parse( formatErrorForJson( error ) ),
 						[ opts.keyName ]: opts.key( item ),
-				  } )
+					} )
 				: pc.red(
 						`${ opts.label( item ) }: ${ formatErrorForDisplay(
 							error,
 							{ hint: false }
 						) }`
-				  )
+					)
 		);
 	};
 
@@ -179,7 +179,7 @@ export async function runItems(
 		opts.keyName === 'index' && items.length > 1
 			? `${ opts.label( items[ 0 ] as number ) }–${ opts.label(
 					items[ items.length - 1 ] as number
-			  ) }`
+				) }`
 			: items.map( opts.label ).join( ', ' );
 
 	while ( i < opts.count ) {
@@ -216,12 +216,12 @@ export async function runItems(
 								...JSON.parse( formatErrorForJson( error ) ),
 								items: items.map( opts.key ),
 								outcome: 'unknown',
-						  } )
+							} )
 						: pc.red(
 								`Batch request for ${ describe(
 									items
 								) } failed. ${ formatErrorForDisplay( error ) }`
-						  )
+							)
 				);
 				reportNotSent( end );
 				return done( true );
@@ -239,10 +239,10 @@ export async function runItems(
 									formatErrorForJson( outcome.error )
 								),
 								outcome: 'sent_individually',
-						  } )
+							} )
 						: warn(
 								`Batch request failed (${ reason }); sending the remaining ${ remaining } items individually.`
-						  )
+							)
 				);
 				continue;
 			}

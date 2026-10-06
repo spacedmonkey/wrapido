@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Internal dependencies
@@ -18,12 +18,12 @@ function jsonResponse( body: unknown, init: ResponseInit = {} ): Response {
 }
 
 afterEach( () => {
-	jest.restoreAllMocks();
+	vi.restoreAllMocks();
 } );
 
 describe( 'resolveApiRoot', () => {
 	it( 'resolves via the HEAD Link header', async () => {
-		const fetchMock = jest
+		const fetchMock = vi
 			.spyOn( globalThis, 'fetch' )
 			.mockImplementation( async ( _url, init ) => {
 				if ( ( init as RequestInit | undefined )?.method === 'HEAD' ) {
@@ -43,7 +43,7 @@ describe( 'resolveApiRoot', () => {
 	} );
 
 	it( 'falls back to the HTML <link> tag when the HEAD response has no Link header', async () => {
-		jest.spyOn( globalThis, 'fetch' ).mockImplementation(
+		vi.spyOn( globalThis, 'fetch' ).mockImplementation(
 			async ( _url, init ) => {
 				if ( ( init as RequestInit | undefined )?.method === 'HEAD' ) {
 					return new Response( null, { status: 200 } );
@@ -60,7 +60,7 @@ describe( 'resolveApiRoot', () => {
 	} );
 
 	it( 'falls back to probing /wp-json/ directly', async () => {
-		jest.spyOn( globalThis, 'fetch' ).mockImplementation(
+		vi.spyOn( globalThis, 'fetch' ).mockImplementation(
 			async ( url, init ) => {
 				if ( ( init as RequestInit | undefined )?.method === 'HEAD' ) {
 					return new Response( null, { status: 200 } );
@@ -81,7 +81,7 @@ describe( 'resolveApiRoot', () => {
 	} );
 
 	it( 'throws a CliError when discovery exhausts every strategy', async () => {
-		jest.spyOn( globalThis, 'fetch' ).mockImplementation(
+		vi.spyOn( globalThis, 'fetch' ).mockImplementation(
 			async () => new Response( 'nope', { status: 404 } )
 		);
 

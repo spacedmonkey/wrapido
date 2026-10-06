@@ -1,13 +1,13 @@
 /**
  * External dependencies
  */
-import { afterAll } from '@jest/globals';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { afterAll } from 'vitest';
 
 /**
- * Jest `setupFilesAfterEnv` entry, run before each test file is loaded: points the config store
+ * Vitest `setupFiles` entry, run before each test file is loaded: points the config store
  * at a scratch directory, so a test that loads `src/config.ts` (even
  * indirectly, e.g. through the auth commands) never reads or writes the real
  * one on the machine running the suite. `WRAPIDO_CONFIG_DIR` rather than

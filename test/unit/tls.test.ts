@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Internal dependencies
@@ -27,7 +27,7 @@ describe( 'disableTlsVerification', () => {
 	} );
 
 	it( "drops Node's insecure-TLS warning but lets other warnings through", () => {
-		const inner = jest.fn();
+		const inner = vi.fn();
 		process.emitWarning = inner as unknown as typeof process.emitWarning;
 		disableTlsVerification();
 

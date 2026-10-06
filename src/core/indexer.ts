@@ -448,13 +448,13 @@ export function supportedVerbsForRoute(
 		: Object.keys( index.routes ).find( ( candidate ) => {
 				const stripped = stripTrailingPlaceholder( candidate );
 				return stripped !== candidate && stripped === path;
-		  } );
+			} );
 
 	const collectionMethods = new Set(
-		isItemOnlyPath ? [] : index.routes[ path ]?.methods ?? []
+		isItemOnlyPath ? [] : ( index.routes[ path ]?.methods ?? [] )
 	);
 	const itemMethods = new Set(
-		itemPath ? index.routes[ itemPath ]?.methods ?? [] : []
+		itemPath ? ( index.routes[ itemPath ]?.methods ?? [] ) : []
 	);
 
 	const supported = new Set< Verb >();

@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 /**
  * Internal dependencies
@@ -13,7 +13,7 @@ import {
 
 const realEmitWarning = process.emitWarning;
 // Stands in for Node's own emitWarning, so nothing reaches stderr.
-const nodeEmit = jest.fn();
+const nodeEmit = vi.fn();
 
 beforeAll( () => {
 	process.emitWarning = nodeEmit as unknown as typeof process.emitWarning;

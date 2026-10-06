@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, vi, type Mock } from 'vitest';
 
 /**
  * Internal dependencies
@@ -22,18 +22,17 @@ import type { IndexResponse } from '../../src/types.js';
 
 /**
  * A minimal stand-in for `WpRestClient` whose `request` method is a spy, so
- * tests can assert exactly how many (if any) requests a code path issued —
- * Jest's ESM setup here can't hoist `jest.mock()` module replacement, so this
- * duck-typed fake (cast to `WpRestClient`) is used instead of mocking the
- * `client.js` module.
+ * tests can assert exactly how many (if any) requests a code path issued.
+ * This duck-typed fake (cast to `WpRestClient`) is used instead of mocking
+ * the `client.js` module.
  * @param response The value `request()` should resolve its `body` to.
  * @return The fake client and its underlying request spy.
  */
 function fakeClient( response: unknown ): {
 	client: WpRestClient;
-	request: jest.Mock;
+	request: Mock;
 } {
-	const request = jest.fn( async () => ( {
+	const request = vi.fn( async () => ( {
 		status: 200,
 		headers: new Headers(),
 		body: response,

@@ -38,6 +38,7 @@ tags:
 
 <!-- markdownlint-enable MD046 -->
 
+<!-- markdownlint-disable-next-line MD051 -- mkdocs slug -->
 A site can have **both** an application-passwords and an oauth2 credential stored at once — see [Using a specific stored credential](#using-a-specific-stored-credential-use-auth) below for how that's disambiguated.
 
 ## Credentials via environment variables

@@ -571,7 +571,7 @@ function formatEndpointArgs(
 		const required = arg.required || name === urlParamName;
 		const type = Array.isArray( arg.type )
 			? arg.type.join( '|' )
-			: arg.type ?? 'any';
+			: ( arg.type ?? 'any' );
 		const header = required
 			? `--${ name }=<${ type }>`
 			: `[--${ name }=<${ type }>]`;
@@ -1422,7 +1422,7 @@ async function runMultiIdCommand( opts: {
 					? 'These may or may not have been deleted. Re-running the same delete is safe: ids already deleted just report an error.'
 					: `These may or may not have been ${
 							verb === 'update' ? 'updated' : 'read'
-					  }. Check with \`wrapido ${ namespace } ${ route } get <id>\`.`,
+						}. Check with \`wrapido ${ namespace } ${ route } get <id>\`.`,
 		} );
 	} finally {
 		progress.finish();
@@ -1617,7 +1617,7 @@ function renderRouteHelp(
 					`  wrapido ${ namespace } ${ displayRoute( route ) } get <${
 						paramName ?? 'value'
 					}>\n`
-		  )
+			)
 		: '';
 	const noIdNote =
 		! requiresParam &&
@@ -1625,7 +1625,7 @@ function renderRouteHelp(
 			? pc.dim(
 					`\nThis route has no addressable <id> (it's a single/settings-style resource) — ` +
 						`read and write it directly via 'list'/'create' on ${ namespace }/${ route }.\n`
-			  )
+				)
 			: '';
 	const contextNote = contexts.length
 		? pc.dim( `\nSupported --context values: ${ contexts.join( ', ' ) }\n` )
@@ -1901,7 +1901,7 @@ function renderRouteHelpWpCli(
 					`  ${ META_KEYWORD.padEnd(
 						width
 					) }Adds, updates, deletes, and lists ${ route } custom fields.`,
-			  ]
+				]
 			: [] ),
 	];
 
@@ -2025,7 +2025,7 @@ function renderVerbHelpWpCli(
 						positional.repeating ? '...' : ''
 					}`,
 					`    ${ positional.description }`,
-			  ]
+				]
 			: [] ),
 		...( positional && endpoint ? [ '' ] : [] ),
 		...( endpoint ? formatOptionsWpCli( endpoint ) : [] ),
@@ -2091,7 +2091,7 @@ export async function runRestCommand(
 			? pc.dim( '\nApplication Passwords are supported on this site.' )
 			: pc.dim(
 					'\nApplication Passwords do not appear to be supported on this site.'
-			  );
+				);
 		if ( flags.format === 'table' ) {
 			const output =
 				renderChildListWpCli(
@@ -2253,7 +2253,7 @@ export async function runRestCommand(
 							verbs,
 							children,
 							paramName
-					  )
+						)
 					: schema,
 				{
 					format: flags.format,
@@ -2343,10 +2343,10 @@ export async function runRestCommand(
 				output: exists
 					? pc.green(
 							`Success: ${ parsed.route } ${ parsed.id } exists.`
-					  )
+						)
 					: pc.dim(
 							`${ parsed.route } ${ parsed.id } does not exist.`
-					  ),
+						),
 				exitCode: exists ? 0 : 1,
 			};
 		}
@@ -2544,7 +2544,7 @@ export async function runRestCommand(
 							client,
 							apiRoot,
 							generateNamespace
-					  )
+						)
 					: undefined;
 				if ( ! discoveredIdBase ) {
 					// A schema-less create route (no declared args at all)
@@ -2717,7 +2717,7 @@ export async function runRestCommand(
 				parsed.namespace,
 				parsed.route,
 				! flags.quiet
-		  )
+			)
 		: undefined;
 	const uploadPlan =
 		parsed.verb === 'create' || parsed.verb === 'update'
@@ -2727,7 +2727,7 @@ export async function runRestCommand(
 					fields: parsed.fields,
 					repeated: parsed.repeated,
 					args: verbArgs,
-			  } )
+				} )
 			: undefined;
 	const requestFields = coerceJsonFields(
 		uploadPlan ? uploadPlan.textFields : parsed.fields,
@@ -2804,13 +2804,13 @@ export async function runRestCommand(
 	const response =
 		fetchAll && ! countOnly
 			? // Shows its own spinner and progress bar.
-			  await fetchAllPages(
+				await fetchAllPages(
 					client,
 					request.url,
 					maxPerPage,
 					`Fetching all pages of ${ parsed.namespace }/${ parsed.route }`,
 					! flags.quiet
-			  )
+				)
 			: await withSpinner( spinnerText, ! flags.quiet, () =>
 					client.request(
 						request.url,
@@ -2818,7 +2818,7 @@ export async function runRestCommand(
 							? { query: { per_page: maxPerPage, page: 1 } }
 							: { method: request.method, body: request.body }
 					)
-			  );
+				);
 	const followed =
 		parsed.verb === 'create'
 			? await followCreatedLocation( client, apiRoot, response, flags )
@@ -3052,7 +3052,7 @@ export async function runHelpCommand(
 							schema,
 							requiresParam,
 							verbs
-					  )
+						)
 					: renderRouteHelp(
 							parsed.namespace,
 							parsed.route,
@@ -3060,7 +3060,7 @@ export async function runHelpCommand(
 							requiresParam,
 							verbs,
 							paramName
-					  ) ) +
+						) ) +
 				renderChildrenNote(
 					index,
 					parsed.namespace,
@@ -3126,7 +3126,7 @@ export async function runHelpCommand(
 						schema.endpoints ?? [],
 						verbs,
 						paramName
-				  )
+					)
 				: printVerbHelp(
 						parsed.namespace,
 						parsed.route,
@@ -3134,7 +3134,7 @@ export async function runHelpCommand(
 						schema.endpoints ?? [],
 						verbs,
 						paramName
-				  ),
+					),
 		exitCode: 0,
 	};
 }
