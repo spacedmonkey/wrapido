@@ -88,6 +88,9 @@
 	},
 	"overrides": {
 		"esbuild": "^0.28.1",
+		"js-yaml@^3": {
+			"argparse": "^2.0.1"
+		},
 		"katex": "^0.18.2",
 		"markdownlint-cli": {
 			"js-yaml": "^5.4.1",
