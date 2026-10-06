@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
 [![Docs](https://img.shields.io/badge/docs-spacedmonkey.github.io-blue.svg)](https://spacedmonkey.github.io/wrapido/)
-![Statements](https://img.shields.io/badge/statements-100%25-brightgreen.svg?style=flat)
+![Statements](https://img.shields.io/badge/statements-99.93%25-brightgreen.svg?style=flat)
 
 <!-- markdownlint-disable-next-line MD033 -->
 **<u>W</u>ordPress <u>R</u>EST <u>API</u> <u>Do</u>er**: a fast CLI for any WordPress site.
