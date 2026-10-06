@@ -22,13 +22,7 @@ export type AuthSource = 'env' | 'none' | 'application-passwords' | 'oauth2';
 
 /** A `--format` value accepted by `formatOutput`. */
 export type OutputFormat =
-	| 'table'
-	| 'json'
-	| 'csv'
-	| 'yaml'
-	| 'ids'
-	| 'count'
-	| 'raw';
+	'table' | 'json' | 'csv' | 'yaml' | 'ids' | 'count' | 'raw';
 
 /** One argument's schema, as returned in a route's OPTIONS response. */
 export interface EndpointArgSchema {
@@ -127,10 +121,4 @@ export interface GlobalFlags {
 
 /** One of the CLI's own verbs (not a raw HTTP method). */
 export type Verb =
-	| 'list'
-	| 'get'
-	| 'create'
-	| 'update'
-	| 'delete'
-	| 'exists'
-	| 'generate';
+	'list' | 'get' | 'create' | 'update' | 'delete' | 'exists' | 'generate';

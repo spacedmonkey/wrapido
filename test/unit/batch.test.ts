@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Internal dependencies
@@ -38,7 +38,7 @@ function indexWith(
 								{ methods: [ 'POST' ], args: { requests } },
 							],
 						},
-				  }
+					}
 				: {} ),
 			...( routes as Record< string, RouteSchema > ),
 		},
@@ -179,7 +179,7 @@ describe( 'itemRouteKey', () => {
 
 describe( 'error status for non-JSON responses', () => {
 	afterEach( () => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	} );
 
 	it( 'keeps the HTTP status on a CliError from an HTML error page', async () => {
@@ -192,7 +192,7 @@ describe( 'error status for non-JSON responses', () => {
 	} );
 
 	it( 'turns a non-JSON 2xx body into a CliError with its status, not a SyntaxError', async () => {
-		jest.spyOn( globalThis, 'fetch' ).mockResolvedValue(
+		vi.spyOn( globalThis, 'fetch' ).mockResolvedValue(
 			new Response( '<b>Warning</b>: oops {"responses":[]}', {
 				status: 200,
 			} )

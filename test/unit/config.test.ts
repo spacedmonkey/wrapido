@@ -1,11 +1,11 @@
 /**
  * External dependencies
  */
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import Conf from 'conf';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /**
  * Internal dependencies
@@ -14,13 +14,13 @@ import { CliError } from '../../src/core/errors.js';
 
 // `conf`'s store is created once at module load time, keyed off
 // `WRAPIDO_CONFIG_DIR` — so it has to be pointed at a scratch directory *before*
-// `../../src/config.js` is ever imported, and Jest's static `import` would
+// `../../src/config.js` is ever imported, and a static `import` would
 // otherwise run before this file's own top-level code does. A dynamic
 // `import()` inside `beforeAll`, after setting the env var, is what makes
 // this test suite isolated from whatever real config file already exists on
 // the machine running it (a pre-existing gap this suite also closes for the
 // `wrapido config get` integration tests, which read the real one).
-let configModule: typeof import('../../src/config.js');
+let configModule: typeof import( '../../src/config.js' );
 let tempDir: string;
 const originalConfigDir = process.env.WRAPIDO_CONFIG_DIR;
 

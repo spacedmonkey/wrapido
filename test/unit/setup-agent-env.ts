@@ -1,5 +1,5 @@
 /**
- * Jest `setupFiles` entry, run before each test file: this suite may itself
+ * Vitest `setupFiles` entry, run before each test file: this suite may itself
  * run inside an AI agent's shell (e.g. Claude Code sets `AI_AGENT`/
  * `CLAUDECODE`), which would otherwise make `agentMode()` default to true
  * everywhere. Scrub every marker so tests opt into agent mode explicitly.

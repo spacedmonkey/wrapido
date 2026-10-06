@@ -1,14 +1,7 @@
 /**
  * External dependencies
  */
-import {
-	afterEach,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	jest,
-} from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Internal dependencies
@@ -34,14 +27,14 @@ describe( 'resolveTimeout', () => {
 } );
 
 describe( 'timedFetch', () => {
-	let spy: ReturnType< typeof jest.spyOn >;
-	let timeoutSpy: ReturnType< typeof jest.spyOn >;
+	let spy: ReturnType< typeof vi.spyOn >;
+	let timeoutSpy: ReturnType< typeof vi.spyOn >;
 
 	beforeEach( () => {
-		spy = jest
+		spy = vi
 			.spyOn( globalThis, 'fetch' )
 			.mockResolvedValue( new Response( 'ok' ) );
-		timeoutSpy = jest.spyOn( AbortSignal, 'timeout' );
+		timeoutSpy = vi.spyOn( AbortSignal, 'timeout' );
 	} );
 
 	afterEach( () => {

@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, vi } from 'vitest';
 
 /**
  * Internal dependencies
@@ -56,20 +56,18 @@ describe( 'introspectApplicationPassword', () => {
 	} );
 
 	it( 'requests the introspect URL resolved against the API root', async () => {
-		const request = jest.fn(
-			async ( _url: string, _options?: unknown ) => ( {
-				status: 200,
-				headers: new Headers(),
-				body: {
-					uuid: 'abcd-1234',
-					app_id: null,
-					name: 'wrapido',
-					created: 1700000000,
-					last_used: null,
-					last_ip: null,
-				},
-			} )
-		);
+		const request = vi.fn( async ( _url: string, _options?: unknown ) => ( {
+			status: 200,
+			headers: new Headers(),
+			body: {
+				uuid: 'abcd-1234',
+				app_id: null,
+				name: 'wrapido',
+				created: 1700000000,
+				last_used: null,
+				last_ip: null,
+			},
+		} ) );
 		const client = { request } as unknown as WpRestClient;
 
 		await introspectApplicationPassword( client, API_ROOT );
@@ -109,13 +107,11 @@ describe( 'revokeApplicationPassword', () => {
 	} );
 
 	it( 'DELETEs the single-uuid route, never the bulk route', async () => {
-		const request = jest.fn(
-			async ( _url: string, _options?: unknown ) => ( {
-				status: 200,
-				headers: new Headers(),
-				body: undefined,
-			} )
-		);
+		const request = vi.fn( async ( _url: string, _options?: unknown ) => ( {
+			status: 200,
+			headers: new Headers(),
+			body: undefined,
+		} ) );
 		const client = { request } as unknown as WpRestClient;
 
 		await revokeApplicationPassword( client, API_ROOT, 'abcd-1234' );
@@ -127,13 +123,11 @@ describe( 'revokeApplicationPassword', () => {
 	} );
 
 	it( 'encodeURIComponent-escapes a uuid containing characters that need escaping', async () => {
-		const request = jest.fn(
-			async ( _url: string, _options?: unknown ) => ( {
-				status: 200,
-				headers: new Headers(),
-				body: undefined,
-			} )
-		);
+		const request = vi.fn( async ( _url: string, _options?: unknown ) => ( {
+			status: 200,
+			headers: new Headers(),
+			body: undefined,
+		} ) );
 		const client = { request } as unknown as WpRestClient;
 
 		await revokeApplicationPassword( client, API_ROOT, 'has space/slash' );

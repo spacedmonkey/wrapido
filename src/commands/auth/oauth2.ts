@@ -403,10 +403,10 @@ function handleStatus(): AuthResult {
 							? 'personal token'
 							: `client ${ credential.clientId }, ${ credential.grantType }`
 					})`
-			  )
+				)
 			: pc.dim(
 					`no stored OAuth2 credential for this site — run "wrapido auth ${ OAUTH2_AUTH_TYPE } login <url> --client-id=<id>" or "wrapido auth ${ OAUTH2_AUTH_TYPE } add <url> --client-id=<id> --client-secret=<secret>".`
-			  ),
+				),
 	];
 	return { output: lines.join( '\n' ), exitCode: 0 };
 }

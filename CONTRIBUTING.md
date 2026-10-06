@@ -31,7 +31,7 @@ npm run dev        # tsup --watch
 Run the full local check suite:
 
 ```sh
-npm test              # jest (unit tests, via wp-scripts) + vitest (the execa-driven integration suite)
+npm test              # vitest: unit tests (via wp-scripts) + the execa-driven integration suite
 npm run lint          # wp-scripts lint-js (WordPress/Gutenberg coding standards)
 npm run lint:md:docs  # wp-scripts lint-md-docs (lints this repo's Markdown docs)
 npm run typecheck     # tsc --noEmit
@@ -41,8 +41,8 @@ npm run format        # wp-scripts format
 Run a single test file or a single test by name while iterating:
 
 ```sh
-NODE_OPTIONS=--experimental-vm-modules npx wp-scripts test-unit-js formatter.test.ts     # unit
-NODE_OPTIONS=--experimental-vm-modules npx wp-scripts test-unit-js -t "name substring"   # unit
+npx vitest run --project unit formatter.test.ts                       # unit
+npx vitest run --project unit -t "name substring"                     # unit
 
 npx vitest run test/integration/cli-core.test.ts                      # integration (one file)
 npx vitest run -t "name substring"                                    # integration
@@ -60,7 +60,7 @@ for `src/cli.ts`/`src/core/debug.ts` as an example).
 
 ## How the test suites work
 
-- **Unit tests** (`test/unit/`), run under **Jest**, exercise pure logic - command/route parsing,
+- **Unit tests** (`test/unit/`), run under **Vitest** (the `unit` project), exercise pure logic - command/route parsing,
   formatting, indexer route matching - with no network involved.
 - **Integration tests** (`test/integration/cli-core.test.ts`, `cli-core-routing.test.ts`,
   `cli-meta.test.ts`, `cli-auth.test.ts`, `cli-auth-oauth2.test.ts` - split across files, balanced by
@@ -74,8 +74,7 @@ for `src/cli.ts`/`src/core/debug.ts` as an example).
   needs a prior `npm run build`). **No live WordPress site is needed** to run or write these tests, and
   none should be required to add new ones - when adding a new verb or command, prefer extending the
   fixture and adding an integration test over mocking `fetch` at the unit level, since most of the value
-  here is in the URL-building and dispatch logic across the whole pipeline, and Jest's ESM setup here
-  can't hoist `jest.mock()` module replacement the way Vitest's `vi.mock()` did. Expect these tests to
+  here is in the URL-building and dispatch logic across the whole pipeline. Expect these tests to
   take seconds rather than milliseconds.
 
 ## Coverage
@@ -83,7 +82,7 @@ for `src/cli.ts`/`src/core/debug.ts` as an example).
 `npm run coverage` runs both suites and produces a merged coverage report under `coverage/`
 (`coverage-summary.json`, `lcov.info`) plus updates the coverage badges at the top of this repo's
 `README.md`. It deliberately doesn't just run each suite's own `--coverage` flag and combine the
-results - Jest's and a V8-based tool's instrumentation build incompatible statement/branch/function
+results - an AST-based and a V8-based tool's instrumentation build incompatible statement/branch/function
 maps for the same file, so merging them at that level produces misleading numbers. Instead both suites
 write raw V8 coverage profiles into a shared `coverage/tmp` directory (via `NODE_V8_COVERAGE`), and a
 single `c8 report` pass converts the combined raw data into one report. See `CLAUDE.md`'s testing

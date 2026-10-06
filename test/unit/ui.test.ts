@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, vi } from 'vitest';
 
 /**
  * Internal dependencies
@@ -18,7 +18,7 @@ describe( 'createProgressBar', () => {
 	} );
 
 	it( 'still prints lines (e.g. errors) when the bar is disabled, but drops notes', () => {
-		const write = jest
+		const write = vi
 			.spyOn( process.stderr, 'write' )
 			.mockImplementation( () => true );
 		try {

@@ -99,6 +99,7 @@ wrapido auth oauth2 remove --all
 
 - **No expiry, no refresh.** The plugin issues tokens that never expire and has no `refresh_token` grant — this is spec-legal (RFC 6749 doesn't require either), not a bug in this tool.
 - **No REST-based revocation.** Unlike Application Passwords, the plugin exposes no HTTP endpoint to revoke a token. `oauth2 remove` only forgets the credential locally — revoke it manually in wp-admin if needed. This applies to a personal token too.
+<!-- markdownlint-disable-next-line MD051 -- mkdocs slug -->
 - **No self-service client registration** — see the prerequisite above. (Doesn't apply to a personal access token — see [personal access token](#wrapido-auth-oauth2-add-no-browser-personal-access-token) above — since there's no client/Application involved in that path at all.)
 - **`client_credentials` requires a plugin version from 2026-02-16 or later** — see [Requires a recent plugin version](#requires-a-recent-plugin-version) above, including a Composer `dev-master`/`composer.lock` gotcha that's the most common way to be on an older version without realizing it.
 - **A `client_credentials` token has no real user context** (it authenticates as user id 0). Some routes' permission callbacks may reject it regardless of validity — `oauth2 add`'s own best-effort verification treats this as inconclusive, not a failure, and still saves the credential. A personal token, by contrast, authenticates as whichever real user generated it, so `add`'s verification blocks the save on an unambiguous rejection instead.

@@ -1,9 +1,9 @@
 /**
  * External dependencies
  */
-import { describe, expect, it } from '@jest/globals';
 import type { ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
+import { describe, expect, it } from 'vitest';
 
 /**
  * Internal dependencies

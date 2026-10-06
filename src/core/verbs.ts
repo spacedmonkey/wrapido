@@ -132,7 +132,7 @@ export function buildVerbRequest( options: BuildRequestOptions ): VerbRequest {
 		? new URL(
 				`${ namespace }/${ spliceId( route, id, paramIndex ) }`,
 				apiRoot
-		  ).toString()
+			).toString()
 		: collectionUrl;
 	const method = METHOD_BY_VERB[ verb ];
 
@@ -151,7 +151,7 @@ export function buildVerbRequest( options: BuildRequestOptions ): VerbRequest {
 						.map( ( f ) => f.trim().split( '.' )[ 0 ] )
 						.filter( Boolean ),
 				] ),
-		  ].join( ',' )
+			].join( ',' )
 		: undefined;
 	const withFields = ( url: string ) =>
 		apiFields && ! ( verb === 'list' && isKeyedRoute( route ) )

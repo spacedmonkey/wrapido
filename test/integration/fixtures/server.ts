@@ -459,7 +459,7 @@ async function handleBatch(
 				method?: string;
 				path: string;
 				body?: unknown;
-		  } > )
+			} > )
 		: [];
 	batchState.sizes.push( requests.length );
 	if ( mode === 'html-403' ) {
@@ -682,7 +682,7 @@ export async function startFixture(): Promise< Fixture > {
 										},
 									],
 								},
-						  } ),
+							} ),
 					'/wp/v2/widgets': {
 						namespace: 'wp/v2',
 						methods: [ 'GET', 'POST' ],
@@ -1989,7 +1989,7 @@ export async function startFixture(): Promise< Fixture > {
 					: {
 							category: { name: 'Categories', slug: 'category' },
 							post_tag: { name: 'Tags', slug: 'post_tag' },
-					  }
+						}
 			);
 			return;
 		}

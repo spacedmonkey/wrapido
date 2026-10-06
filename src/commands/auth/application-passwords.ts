@@ -515,10 +515,10 @@ function handleStatus(): AuthResult {
 		credential
 			? pc.green(
 					`authenticated as ${ credential.username } (${ credential.authMethod })`
-			  )
+				)
 			: pc.dim(
 					`no stored credential for this site — pass --username/--password (or WP_USERNAME/WP_PASSWORD), or run "wrapido auth ${ APPLICATION_PASSWORDS_AUTH_TYPE } login <url>".`
-			  ),
+				),
 	];
 	return { output: lines.join( '\n' ), exitCode: 0 };
 }

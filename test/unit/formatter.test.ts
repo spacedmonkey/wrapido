@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 /**
  * Internal dependencies
