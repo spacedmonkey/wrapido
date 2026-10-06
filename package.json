@@ -35,7 +35,7 @@
 		"wrapido": "./dist/cli.js"
 	},
 	"dependencies": {
-		"@wordpress/url": "^4.54.0",
+		"@wordpress/url": "^4.56.0",
 		"cli-progress": "^3.12.0",
 		"commander": "^15.0.0",
 		"conf": "^15.1.0",
@@ -48,7 +48,7 @@
 	},
 	"devDependencies": {
 		"@types/cli-progress": "^3.11.6",
-		"@types/node": "^26.4.1",
+		"@types/node": "^26.6.4",
 		"@wordpress/eslint-plugin": "^27.0.0",
 		"@wordpress/prettier-config": "^4.56.0",
 		"@wordpress/scripts": "^36.0.0",
@@ -58,9 +58,9 @@
 		"istanbul-badges-readme": "^1.9.0",
 		"prettier": "npm:wp-prettier@^3.0.3",
 		"tsup": "^8.3.5",
-		"tsx": "^4.19.2",
+		"tsx": "^4.23.15",
 		"typescript": "^5.7.2",
-		"vitest": "^5.0.0"
+		"vitest": "^5.0.3"
 	},
 	"scripts": {
 		"wrapido": "tsx src/bin.ts",
