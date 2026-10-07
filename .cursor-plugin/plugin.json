@@ -9,5 +9,6 @@
 	"homepage": "https://spacedmonkey.github.io/wrapido/",
 	"repository": "https://github.com/spacedmonkey/wrapido",
 	"license": "MIT",
-	"keywords": [ "wordpress", "rest-api", "cli", "wp-cli" ]
+	"keywords": [ "wordpress", "rest-api", "cli", "wp-cli" ],
+	"logo": "docs/assets/logo.svg"
 }

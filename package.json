@@ -1,8 +1,8 @@
 {
 	"name": "wrapido",
-	"version": "0.1.0",
+	"version": "0.1.3",
 	"description": "WordPress REST API Doer: a fast CLI for any WordPress site.",
-	"author": "Spacedmonkey <spacedmonkey2@gmail.com>",
+	"author": "Spacedmonkey (https://www.spacedmonkey.com)",
 	"license": "MIT",
 	"keywords": [
 		"wordpress",
@@ -84,7 +84,9 @@
 		"lint": "wp-scripts lint-js",
 		"lint:md:docs": "wp-scripts lint-md-docs",
 		"lint:pkg-json": "wp-scripts lint-pkg-json",
-		"format": "wp-scripts format"
+		"format": "wp-scripts format",
+		"sync:plugins": "node scripts/sync-agent-plugins.js",
+		"check:plugins": "node scripts/sync-agent-plugins.js --check"
 	},
 	"overrides": {
 		"esbuild": "^0.28.1",

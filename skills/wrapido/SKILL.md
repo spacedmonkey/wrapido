@@ -16,7 +16,8 @@ description: Use the wrapido CLI to read and change content on any WordPress sit
 
 Agent mode gives compact JSON on stdout (`_links`/`_embedded` stripped), plain notices on stderr, no spinners or colour, errors as `{"error":{"message","code","status","params","hint"}}` on stderr, and a warning for any arg the route doesn't declare.
 
-- It turns on automatically inside Claude Code. Check once with `wrapido --debug --help`: it prints `agent mode: on (CLAUDECODE)`.
+- It turns on automatically inside Claude Code, OpenAI Codex, GitHub Copilot's agent tooling (Copilot CLI), Cline and Cursor. Check once with `wrapido --debug --help`: it prints `agent mode: on (<marker>)`, e.g. `on (CLAUDECODE)`.
+- Some agents aren't detected (VS Code's Copilot chat, Gemini CLI): there it says `off`, so prefix every command with `WRAPIDO_AGENT=1` (or `AI_AGENT=1`).
 - If it says `off` (a user-set `WRAPIDO_AGENT=0` or `AI_AGENT=0` wins over detection), prefix every command with `WRAPIDO_AGENT=1`.
 - Don't pass `--format=table`. Read `status` and `hint` from JSON errors before retrying.
 
@@ -120,7 +121,7 @@ To set up, ask which type the user wants (default: Application Passwords), then:
 #### Application Passwords
 
 1. The user creates one in wp-admin under Users → Profile → Application Passwords.
-2. Either they export it in the shell Claude Code runs from (`WP_USERNAME`, `WP_PASSWORD`) and nothing is stored, or store it per site:
+2. Either they export it in the shell your agent runs from (`WP_USERNAME`, `WP_PASSWORD`) and nothing is stored, or store it per site:
    `wrapido auth application-passwords add <url> --username="$WP_USERNAME" --password="$WP_PASSWORD"` (verified before saving).
 3. Or the browser flow, which creates one for them: `wrapido auth application-passwords login <url>`.
 

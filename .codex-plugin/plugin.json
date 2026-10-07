@@ -1,0 +1,29 @@
+{
+	"name": "wrapido",
+	"description": "Teach AI coding agents to use the wrapido CLI to read and change WordPress content through the REST API.",
+	"version": "0.1.3",
+	"author": {
+		"name": "Spacedmonkey",
+		"url": "https://www.spacedmonkey.com"
+	},
+	"homepage": "https://spacedmonkey.github.io/wrapido/",
+	"repository": "https://github.com/spacedmonkey/wrapido",
+	"license": "MIT",
+	"keywords": [ "wordpress", "rest-api", "cli", "wp-cli" ],
+	"skills": "./skills/",
+	"interface": {
+		"displayName": "wrapido",
+		"shortDescription": "Teach AI coding agents to use the wrapido CLI to read and change WordPress content through the REST API.",
+		"developerName": "Spacedmonkey",
+		"category": "Developer Tools",
+		"capabilities": [ "Interactive", "Read", "Write" ],
+		"websiteURL": "https://spacedmonkey.github.io/wrapido/",
+		"defaultPrompt": [
+			"List the five most recent draft posts on my WordPress site.",
+			"Create a draft post titled Hello World.",
+			"Which custom post types and taxonomies does this site register?"
+		],
+		"composerIcon": "./docs/assets/logo.svg",
+		"logo": "./docs/assets/logo.svg"
+	}
+}

@@ -34,6 +34,19 @@ jobs:
       - name: Lint Markdown docs
         run: npm run lint:md:docs
 
+      - name: No personal email addresses in the repository
+        run: |
+          if git grep -nIE '[[:alnum:]._%+-]+@(gmail|googlemail|outlook|hotmail|live|yahoo|icloud|me|proton|protonmail)\.(com|me)'; then
+            echo '::error::Personal email address found. Use a GitHub profile URL or a users.noreply.github.com address instead.'
+            exit 1
+          fi
+
+      - name: Check agent plugin manifests are in sync
+        run: npm run check:plugins
+
+      - name: Validate Claude Code plugin and marketplace
+        run: npx -y @anthropic-ai/claude-code plugin validate .
+
       - name: Typecheck
         run: npm run typecheck
 
