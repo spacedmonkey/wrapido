@@ -21,13 +21,15 @@ nav:
   - Meta commands: meta-commands.md
   - Uploading files: uploading-files.md
   - AI agents:
-      - Overview: agent-plugins.md
+      - Overview: ai-agents.md
       - Agent mode: agent-mode.md
-      - Claude Code: claude-code.md
-      - GitHub Copilot: github-copilot.md
-      - OpenAI Codex: codex.md
-      - Gemini CLI: gemini-cli.md
-      - Cursor: cursor.md
+      - Agent plugins:
+          - Overview: agent-plugins.md
+          - Claude Code: claude-code.md
+          - GitHub Copilot: github-copilot.md
+          - OpenAI Codex: codex.md
+          - Gemini CLI: gemini-cli.md
+          - Cursor: cursor.md
   - Examples: examples.md
   - Tags: tags.md
   - Contributing: contributing.md

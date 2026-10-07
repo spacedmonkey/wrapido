@@ -98,7 +98,7 @@ There is also a `wrapido` skill (`skills/wrapido/`) that teaches the agent the w
 | Gemini CLI | `gemini extensions install https://github.com/spacedmonkey/wrapido --ref=main` | [Gemini CLI](docs/gemini-cli.md) |
 | Cursor | In Customize, import "From GitHub Repository": `https://github.com/spacedmonkey/wrapido` | [Cursor](docs/cursor.md) |
 
-Export `WP_USERNAME`/`WP_PASSWORD` (an Application Password) and ask the agent to work with your site. See [AI agents](docs/agent-plugins.md) for the full setup and a guide for each tool.
+Export `WP_USERNAME`/`WP_PASSWORD` (an Application Password) and ask the agent to work with your site. See [AI agents](docs/ai-agents.md) for the full setup and a guide for each tool.
 
 ## Authentication
 

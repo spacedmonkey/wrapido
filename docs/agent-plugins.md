@@ -5,31 +5,20 @@ tags:
   - cli
 ---
 
-# AI agents
+# Agent plugins
 
-AI coding agents (Claude Code, GitHub Copilot, OpenAI Codex, Gemini CLI, Cursor and others) can use `wrapido` to explore a WordPress site's REST API and build content with it. Two pieces make that work, and they're independent:
+`wrapido` ships one skill, `wrapido` (`skills/wrapido/SKILL.md`), packaged as a plugin for several AI coding tools. The skill teaches the agent to:
 
-- **[Agent mode](agent-mode.md)** changes how the CLI _talks_: compact JSON output, JSON errors and warnings for unknown flags, with no colour or spinners. It turns itself on inside most agents and changes nothing for people at a terminal.
-- **The `wrapido` skill** changes what the agent _knows_. It's packaged as a plugin for each tool, and teaches the agent to:
-    - start in the `wp/v2` namespace and discover the API before acting;
-    - always run in agent mode;
-    - authenticate with Application Passwords or OAuth2, and walk you through setting one up when a request needs it;
-    - fetch every item with `--per_page=-1`;
-    - make bulk changes with several ids (batched through `/batch/v1`) and read partial failures;
-    - upload files;
-    - keep output small;
-    - follow the safety rules (drafts by default, confirm before deleting) and avoid the common gotchas.
+- start in the `wp/v2` namespace and discover the API before acting;
+- always run in [agent mode](agent-mode.md);
+- authenticate with Application Passwords or OAuth2, and walk you through setting one up when a request needs it;
+- fetch every item with `--per_page=-1`;
+- make bulk changes with several ids (batched through `/batch/v1`) and read partial failures;
+- upload files;
+- keep output small;
+- follow the safety rules (drafts by default, confirm before deleting) and avoid the common gotchas.
 
-The skill is only knowledge: the agent still runs the real `wrapido` command.
-
-## Get started
-
-1. [Install the CLI](installation.md), so `wrapido` is on your `PATH`.
-2. Install the plugin in your tool, following its guide in the table below.
-3. Give the agent [credentials and a site](#credentials-and-a-site).
-4. If the table says agent mode isn't detected in your tool, export `WRAPIDO_AGENT=1` in the shell you start it from.
-
-Then ask for WordPress work in plain language, for example "List the five most recent draft posts."
+The skill is only knowledge: the agent still runs the real `wrapido` command, so [install the CLI](installation.md) first. See [AI agents](ai-agents.md) for the full setup, including [credentials and a site](ai-agents.md#credentials-and-a-site).
 
 ## Supported tools
 
@@ -47,32 +36,6 @@ Where agent mode isn't detected, the skill also tells the agent to prefix its co
 ### Other tools
 
 Most other agents (OpenCode, Cline, Windsurf, Roo Code, Junie, Amp, Goose and more) read Agent Skills from a skills folder without a plugin. Copy `skills/wrapido` into that tool's skills folder (often `.agents/skills/`), or point the agent at [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md), which is the same guidance as a plain file. Set `WRAPIDO_AGENT=1` unless the tool is listed under [Agent mode → Turn it on](agent-mode.md#turn-it-on).
-
-## Credentials and a site
-
-The setup is the same in every tool. Use a WordPress [Application Password](authentication-application-passwords.md), exported in the shell you start the tool from, so the password never appears in the conversation, your shell history or the process list:
-
-```sh
-export WP_USERNAME=admin
-export WP_PASSWORD="xxxx xxxx xxxx xxxx xxxx xxxx"
-```
-
-Put the site in a `wrapido.yml` in your project so the agent never has to repeat `--url`:
-
-```yaml
-url: https://example.com
-```
-
-Other options:
-
-- **Store a credential once** with `wrapido auth application-passwords add <url> --username="$WP_USERNAME" --password="$WP_PASSWORD"`. Stored credentials are used for that site automatically.
-- **[OAuth2](authentication-oauth2.md)**, on a site running the WP-API/OAuth2 plugin: `wrapido auth oauth2 add <url> --client-id=<id> --client-secret=<secret>` (`client_credentials`), or `wrapido auth oauth2 add <url> --token=<token>` for a personal access token. A `client_credentials` token acts as user 0, so drafts and `--context=edit` still need a real user.
-- **Skip it.** The agent asks which type you want and walks you through it the first time a request needs auth (drafts, private content, settings, any write, or a `401` error).
-
-`auth ... login` prints a URL and waits for a callback on `127.0.0.1`, so a person has to open it in a browser on the same machine; the options above don't need one. Use `--use-auth=none` to see what an anonymous visitor sees.
-
-!!! warning "Project files are trusted input"
-    A `wrapido.yml` in a repository you cloned can set `url`, and exported `WP_USERNAME`/`WP_PASSWORD` would be sent to that site. Run `wrapido config get` in an unfamiliar project first. The skill tells the agent to do the same.
 
 ## How the plugins work
 

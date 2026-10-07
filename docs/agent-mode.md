@@ -6,7 +6,7 @@ tags:
 
 # Agent mode
 
-**Agent mode** makes `wrapido`'s output easy for a program to read — an AI agent or a script — and changes nothing for people at a terminal. To set up an AI coding agent end to end (the CLI, the `wrapido` skill, credentials and a site), start at [AI agents](agent-plugins.md); this page is the reference for what agent mode itself does.
+**Agent mode** makes `wrapido`'s output easy for a program to read — an AI agent or a script — and changes nothing for people at a terminal. To set up an AI coding agent end to end (the CLI, the `wrapido` skill, credentials and a site), start at [AI agents](ai-agents.md); this page is the reference for what agent mode itself does.
 
 ## Turn it on
 
@@ -68,4 +68,4 @@ These help agents but are available to everyone:
 
 ## For the agent
 
-[AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md) is the same guidance as the `wrapido` skill, written for the agent itself as a plain file. Credentials and headless authentication are covered in [AI agents → Credentials and a site](agent-plugins.md#credentials-and-a-site).
+[AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md) is the same guidance as the `wrapido` skill, written for the agent itself as a plain file. Credentials and headless authentication are covered in [AI agents → Credentials and a site](ai-agents.md#credentials-and-a-site).

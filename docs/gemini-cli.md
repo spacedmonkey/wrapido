@@ -42,7 +42,7 @@ Check with `wrapido --debug --help`, which prints `agent mode: on (WRAPIDO_AGENT
 
 ## 4. Credentials and a site
 
-Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Gemini, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agents → Credentials and a site](agent-plugins.md#credentials-and-a-site), including the warning about `wrapido.yml` in cloned repositories.
+Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Gemini, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agents → Credentials and a site](ai-agents.md#credentials-and-a-site), including the warning about `wrapido.yml` in cloned repositories.
 
 ## 5. Use it
 

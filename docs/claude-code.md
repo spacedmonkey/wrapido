@@ -51,7 +51,7 @@ Agent mode switches on by itself inside Claude Code, so there is nothing to conf
 
 ## 4. Credentials and a site
 
-Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Claude Code, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agents → Credentials and a site](agent-plugins.md#credentials-and-a-site) for OAuth2 and other options, including the warning about `wrapido.yml` in cloned repositories. If you skip this, Claude walks you through it the first time a request needs auth.
+Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Claude Code, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agents → Credentials and a site](ai-agents.md#credentials-and-a-site) for OAuth2 and other options, including the warning about `wrapido.yml` in cloned repositories. If you skip this, Claude walks you through it the first time a request needs auth.
 
 ## 5. Use it
 
