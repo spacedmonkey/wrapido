@@ -98,7 +98,7 @@ See [CONTRIBUTING.md](https://github.com/spacedmonkey/wrapido/blob/main/CONTRIBU
 
 ## Use it with Claude Code
 
-Once `wrapido` is on your `PATH`, you can install the `wrapido` skill so Claude Code knows how to use it. See [Claude Code skill](claude-code.md).
+Once `wrapido` is on your `PATH`, you can install the `wrapido` skill so your AI coding agent knows how to use it. See [AI agents](agent-plugins.md).
 
 ## Note on npm registry publishing
 

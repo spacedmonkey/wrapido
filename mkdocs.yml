@@ -20,9 +20,9 @@ nav:
   - Configuration: configuration.md
   - Meta commands: meta-commands.md
   - Uploading files: uploading-files.md
-  - Agent mode: agent-mode.md
-  - AI agent plugins:
+  - AI agents:
       - Overview: agent-plugins.md
+      - Agent mode: agent-mode.md
       - Claude Code: claude-code.md
       - GitHub Copilot: github-copilot.md
       - OpenAI Codex: codex.md

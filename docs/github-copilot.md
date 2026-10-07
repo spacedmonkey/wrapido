@@ -51,7 +51,7 @@ The Copilot CLI is detected automatically. VS Code's chat sets no environment va
 
 ## 4. Credentials and a site
 
-Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Copilot, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agent plugins → Credentials and a site](agent-plugins.md#credentials-and-a-site), including the warning about `wrapido.yml` in cloned repositories.
+Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Copilot, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agents → Credentials and a site](agent-plugins.md#credentials-and-a-site), including the warning about `wrapido.yml` in cloned repositories.
 
 ## 5. Use it
 
