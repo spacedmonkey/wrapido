@@ -114,4 +114,4 @@ Patterns match the command text, so a read with flags before the verb (for examp
 
 ## Other agents
 
-The skill is Claude Code specific, but the knowledge isn't: [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md) is the same guidance as a plain file for Codex, Cursor, Copilot, Cline and other tools that read it. See [Agent mode](agent-mode.md) for how each is detected.
+The same skill also ships as a plugin for [GitHub Copilot](github-copilot.md), [OpenAI Codex](codex.md), [Gemini CLI](gemini-cli.md) and [Cursor](cursor.md); see [AI agent plugins](agent-plugins.md) for how they fit together. For any other tool, [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md) is the same guidance as a plain file. See [Agent mode](agent-mode.md) for how each tool is detected.

@@ -86,6 +86,6 @@ url: https://example.com
 
 and export `WRAPIDO_AGENT=1` in the agent's environment. Point the agent at [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md), which is written for it.
 
-## Claude Code skill
+## Agent plugins
 
-For Claude Code there is also a ready-made skill and plugin that teaches Claude the workflow, safety rules and gotchas. See [Claude Code skill](claude-code.md) for installing and using it.
+There is also a ready-made skill, packaged as a plugin for Claude Code, GitHub Copilot, OpenAI Codex, Gemini CLI and Cursor, that teaches the agent the workflow, safety rules and gotchas. See [AI agent plugins](agent-plugins.md) for installing it in each tool, or [Claude Code skill](claude-code.md) for Claude Code.

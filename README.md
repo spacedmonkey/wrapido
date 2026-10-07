@@ -87,14 +87,18 @@ Any other `--name=value` (or bare `--name`, treated as `--name=true`) is passed 
 
 Auto-detected inside Claude Code, OpenAI Codex, GitHub Copilot's agent tooling, Cline and Cursor (or set `WRAPIDO_AGENT=1` by hand): JSON by default (compact, `_links`/`_embedded` stripped), no colour or spinners, JSON errors, and warnings for unknown flags. Nothing changes for interactive use. See [docs/agent-mode.md](docs/agent-mode.md) and [AGENTS.md](AGENTS.md) (written for the agent itself).
 
-For Claude Code there is also a `wrapido` skill (`skills/wrapido/`) that teaches Claude the workflow, safety rules and gotchas. Install the CLI (above), then:
+There is also a `wrapido` skill (`skills/wrapido/`) that teaches the agent the workflow, safety rules and gotchas, packaged as a plugin for several AI coding tools. It is knowledge only, so install the CLI (above) first, then:
 
-```sh
-claude plugin marketplace add spacedmonkey/wrapido
-claude plugin install wrapido@wrapido
-```
+| Tool | Install | Guide |
+| --- | --- | --- |
+| Claude Code | `claude plugin marketplace add spacedmonkey/wrapido` then `claude plugin install wrapido@wrapido` | [Claude Code](docs/claude-code.md) |
+| GitHub Copilot CLI | `copilot plugin marketplace add spacedmonkey/wrapido` then `copilot plugin install wrapido@wrapido` | [GitHub Copilot](docs/github-copilot.md) |
+| VS Code (Copilot) | Add `"chat.plugins.marketplaces": ["spacedmonkey/wrapido"]` to settings | [GitHub Copilot](docs/github-copilot.md) |
+| OpenAI Codex | `codex plugin marketplace add spacedmonkey/wrapido` then `codex plugin add wrapido@wrapido` | [Codex](docs/codex.md) |
+| Gemini CLI | `gemini extensions install https://github.com/spacedmonkey/wrapido --ref=main` | [Gemini CLI](docs/gemini-cli.md) |
+| Cursor | In Customize, import "From GitHub Repository": `https://github.com/spacedmonkey/wrapido` | [Cursor](docs/cursor.md) |
 
-Export `WP_USERNAME`/`WP_PASSWORD` (an Application Password) and ask Claude to work with your site, or run `/wrapido`. See [Claude Code skill](docs/claude-code.md) for the copy-the-folder alternative, permissions and examples.
+Export `WP_USERNAME`/`WP_PASSWORD` (an Application Password) and ask the agent to work with your site. See [AI agent plugins](docs/agent-plugins.md) for how the plugins work and the agent-mode setup each tool needs.
 
 ## Authentication
 
