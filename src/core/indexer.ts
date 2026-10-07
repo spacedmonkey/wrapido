@@ -160,10 +160,22 @@ export function spliceParams(
 		result.splice(
 			param.index + i,
 			0,
-			encodeURIComponent( values[ i ] as string )
+			encodePathParam( values[ i ] as string )
 		);
 	} );
 	return result;
+}
+
+/**
+ * URI-encodes a URL parameter value for use in a route path, keeping any `/`
+ * literal. Some identifiers contain a slash by design (an Abilities API name
+ * such as `core/get-site-info`, matched by `(?P<name>[a-zA-Z0-9\-\/]+)`), and
+ * WordPress only matches the literal form: an encoded `%2F` is a 404.
+ * @param value The parameter value.
+ * @return The value, encoded segment by segment.
+ */
+export function encodePathParam( value: string ): string {
+	return value.split( '/' ).map( encodeURIComponent ).join( '/' );
 }
 
 /**

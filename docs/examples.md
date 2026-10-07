@@ -47,6 +47,9 @@ wrapido wp/v2 posts exists 42 --url=https://example.com
 # Generate 5 posts reusing the same fields
 wrapido wp/v2 posts generate --count=5 --status=publish --url=https://example.com
 
+# Run a read-only WordPress ability (Abilities API)
+wrapido wp-abilities/v1 abilities run get core/get-site-info --input='{"fields":["name","url"]}' --url=https://example.com
+
 # Save defaults so you don't have to repeat --url/--username
 wrapido config set --url=https://example.com --username=admin
 wrapido config get
