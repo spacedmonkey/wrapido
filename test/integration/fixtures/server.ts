@@ -918,6 +918,41 @@ export async function startFixture(): Promise< Fixture > {
 							methods: [ 'GET' ],
 							endpoints: [ { methods: [ 'GET' ] } ],
 						},
+					// Modelled on the Abilities API (wp-abilities/v1, here under wp/v2
+					// to keep the fixture to one namespace): an ability's name
+					// contains a literal `/` (`core/get-site-info`), which the route
+					// regex matches only unencoded — exercises `encodePathParam`.
+					'/wp/v2/abilities': {
+						namespace: 'wp/v2',
+						methods: [ 'GET' ],
+						endpoints: [ { methods: [ 'GET' ] } ],
+					},
+					'/wp/v2/abilities/(?P<name>[a-zA-Z0-9\\-\\/]+)': {
+						namespace: 'wp/v2',
+						methods: [ 'GET' ],
+						endpoints: [ { methods: [ 'GET' ] } ],
+					},
+					'/wp/v2/abilities/(?P<name>[a-zA-Z0-9\\-\\/]+)/run': {
+						namespace: 'wp/v2',
+						methods: [ 'GET', 'POST' ],
+						endpoints: [
+							{
+								methods: [ 'GET', 'POST' ],
+								args: {
+									name: {
+										type: 'string',
+										description: 'The ability name.',
+										required: false,
+									},
+									input: {
+										type: 'object',
+										description: 'Ability input.',
+										required: false,
+									},
+								},
+							},
+						],
+					},
 					// Modelled on WP_REST_Global_Styles_Revisions_Controller's sibling
 					// (real WP's .../themes/<stylesheet>/variations): a mid-path
 					// parameter *and* a hybrid node — "global-styles/themes" is both
@@ -2150,6 +2185,49 @@ export async function startFixture(): Promise< Fixture > {
 				return;
 			}
 			send( res, 200, { id: 101, parent: 10 } );
+			return;
+		}
+
+		// A `%2F` in the ability name is a 404 here, as in real WordPress:
+		// only the literal-slash form `core/get-site-info` matches.
+		const abilityRunMatch = path.match(
+			/^\/wp-json\/wp\/v2\/abilities\/([a-zA-Z0-9\-/]+)\/run$/
+		);
+		if ( abilityRunMatch && req.method === 'GET' ) {
+			if ( abilityRunMatch[ 1 ] !== 'core/get-site-info' ) {
+				send( res, 404, {
+					code: 'rest_no_route',
+					message:
+						'No route was found matching the URL and request method.',
+					data: { status: 404 },
+				} );
+				return;
+			}
+			const input = url.searchParams.get( 'input[fields][0]' );
+			send( res, 200, {
+				name: 'Fixture',
+				...( input ? { requested: input } : {} ),
+			} );
+			return;
+		}
+
+		const abilityMatch = path.match(
+			/^\/wp-json\/wp\/v2\/abilities\/([a-zA-Z0-9\-/]+)$/
+		);
+		if ( abilityMatch && req.method === 'GET' ) {
+			if ( abilityMatch[ 1 ] !== 'core/get-site-info' ) {
+				send( res, 404, {
+					code: 'rest_no_route',
+					message:
+						'No route was found matching the URL and request method.',
+					data: { status: 404 },
+				} );
+				return;
+			}
+			send( res, 200, {
+				name: 'core/get-site-info',
+				label: 'Get Site Information',
+			} );
 			return;
 		}
 
