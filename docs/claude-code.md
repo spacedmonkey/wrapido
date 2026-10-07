@@ -5,30 +5,19 @@ tags:
   - cli
 ---
 
-# Claude Code skill
+# Claude Code
 
-This repository ships a [Claude Code](https://claude.com/claude-code) skill, `wrapido`, that teaches Claude how to drive the CLI: to start in the `wp/v2` namespace and discover before acting, to always run in agent mode, how to authenticate with Application Passwords or OAuth2 (and to walk you through setting one up when a request needs it), `--per_page=-1` to fetch every item, bulk changes with several ids (batched through `/batch/v1`) and how to read partial failures, file uploads, how to keep output small, safety rules (drafts by default, confirm before deleting), and the common gotchas. It builds on [Agent mode](agent-mode.md) and [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md), and is only knowledge: Claude still runs the real `wrapido` command, so the CLI must be installed too.
+The [`wrapido` skill](agent-plugins.md) installs as a plugin in [Claude Code](https://claude.com/claude-code). It teaches Claude to drive the `wrapido` CLI: discover the site's REST API first, run in agent mode, authenticate, page through everything, make bulk changes, upload files, and follow the safety rules.
+
+## How it works
+
+This repository is a Claude Code plugin and its own single-plugin marketplace (`.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`). The plugin's only content is the skill in `skills/wrapido/SKILL.md`, which Claude loads when a request is about a WordPress site.
 
 ## 1. Install the CLI
 
-Claude runs `wrapido` from your shell, so it needs to be on your `PATH`. `wrapido` isn't published to npm yet, so install it from source (see [Installation](installation.md) for details):
+Claude runs `wrapido` from your shell, so it must be on your `PATH`. See [Installation](installation.md), then check with `wrapido --help`.
 
-```sh
-git clone https://github.com/spacedmonkey/wrapido.git
-cd wrapido
-npm install
-npm run build
-npm install -g .
-wrapido --help
-```
-
-## 2. Install the skill
-
-Pick one.
-
-### As a plugin (recommended)
-
-The repository is a Claude Code plugin and its own single-plugin marketplace:
+## 2. Install the plugin
 
 ```sh
 claude plugin marketplace add spacedmonkey/wrapido
@@ -43,9 +32,9 @@ claude plugin marketplace update wrapido
 
 To try a local checkout instead of GitHub, add the folder: `claude plugin marketplace add ~/path/to/wrapido`.
 
-### Copy the skill
+### Without the plugin
 
-For every project on your machine:
+Claude Code also loads plain skill folders. For every project on your machine:
 
 ```sh
 mkdir -p ~/.claude/skills
@@ -56,29 +45,15 @@ For a single project, copy it to that project's `.claude/skills/wrapido/` instea
 
 Restart Claude Code (or start a new session) afterwards. Run `/skills` to confirm `wrapido` is listed.
 
-## 3. Give Claude credentials and a site
+## 3. Agent mode
 
-Use a WordPress [Application Password](authentication-application-passwords.md), exported in the shell you start Claude Code from, so the password never appears in the conversation, your shell history or the process list:
+Agent mode switches on by itself inside Claude Code, so there is nothing to configure. Check with `wrapido --debug --help`, which prints `agent mode: on (CLAUDECODE)`. See [Agent mode](agent-mode.md).
 
-```sh
-export WP_USERNAME=admin
-export WP_PASSWORD="xxxx xxxx xxxx xxxx xxxx xxxx"
-```
+## 4. Credentials and a site
 
-Put the site in a `wrapido.yml` in your project so Claude doesn't have to repeat `--url`:
+Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Claude Code, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agents → Credentials and a site](ai-agents.md#credentials-and-a-site) for OAuth2 and other options, including the warning about `wrapido.yml` in cloned repositories. If you skip this, Claude walks you through it the first time a request needs auth.
 
-```yaml
-url: https://example.com
-```
-
-If the site uses the [OAuth2](authentication-oauth2.md) plugin instead, store a credential once with `wrapido auth oauth2 add` or `login`. If you skip this step, Claude asks which type you want and walks you through it the first time a request needs auth (drafts, private content, settings, any write, or a `401` error).
-
-Agent mode switches on by itself inside Claude Code, so there is nothing else to configure. Check with `wrapido --debug`, which prints `agent mode: on (CLAUDECODE)`.
-
-!!! warning "Project files are trusted input"
-    A `wrapido.yml` in a repository you cloned can set `url`, and exported `WP_USERNAME`/`WP_PASSWORD` would be sent to that site. Run `wrapido config get` in an unfamiliar project first. The skill tells Claude to do the same.
-
-## 4. Use it
+## 5. Use it
 
 Claude loads the skill on its own when you ask for something WordPress-related. You can also invoke it directly with `/wrapido`:
 
@@ -111,7 +86,3 @@ Plugins can't grant permissions, so Claude Code prompts before every `wrapido` c
 ```
 
 Patterns match the command text, so a read with flags before the verb (for example `wrapido --url=... wp/v2 posts list`) will still prompt.
-
-## Other agents
-
-The same skill also ships as a plugin for [GitHub Copilot](github-copilot.md), [OpenAI Codex](codex.md), [Gemini CLI](gemini-cli.md) and [Cursor](cursor.md); see [AI agent plugins](agent-plugins.md) for how they fit together. For any other tool, [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md) is the same guidance as a plain file. See [Agent mode](agent-mode.md) for how each tool is detected.

@@ -6,7 +6,7 @@ tags:
 
 # Agent mode
 
-`wrapido` pairs well with AI agents (Claude Code, Codex, scripts): once auth is set up, an agent can discover a site's REST API and build content with it. **Agent mode** makes the output easy for a program to read, and changes nothing for people at a terminal.
+**Agent mode** makes `wrapido`'s output easy for a program to read — an AI agent or a script — and changes nothing for people at a terminal. To set up an AI coding agent end to end (the CLI, the `wrapido` skill, credentials and a site), start at [AI agents](ai-agents.md); this page is the reference for what agent mode itself does.
 
 ## Turn it on
 
@@ -66,26 +66,6 @@ These help agents but are available to everyone:
 -   `--fields=id,title.rendered` keeps nesting in JSON/YAML.
 -   `types`, `taxonomies` and `statuses` list one row per entry.
 
-## Authentication for agents
+## For the agent
 
-`auth ... login` prints a URL and waits for a callback on `127.0.0.1`, so a person has to open it in a browser on the same machine. Headless options:
-
--   `WP_USERNAME` + `WP_PASSWORD` environment variables (a WordPress [Application Password](authentication-application-passwords.md)) — preferred, since `--password` leaks into shell history and the process list.
--   Store once with `wrapido auth application-passwords add <url> --username="$WP_USERNAME" --password="$WP_PASSWORD"`.
--   [OAuth2](authentication-oauth2.md), on a site running the WP-API/OAuth2 plugin: `wrapido auth oauth2 add <url> --client-id=<id> --client-secret=<secret>` (`client_credentials`), or `wrapido auth oauth2 add <url> --token=<token>` for a personal access token.
-
-Stored credentials are used implicitly for that site; `wrapido auth <type> list` prints them as JSON. Use `--use-auth=none` to see what an anonymous visitor sees. An OAuth2 `client_credentials` token acts as user 0, so drafts and `--context=edit` still need a real user.
-
-## Recommended setup
-
-Put a `wrapido.yml` next to the agent's working directory so it never has to repeat the site:
-
-```yaml
-url: https://example.com
-```
-
-and export `WRAPIDO_AGENT=1` in the agent's environment. Point the agent at [AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md), which is written for it.
-
-## Agent plugins
-
-There is also a ready-made skill, packaged as a plugin for Claude Code, GitHub Copilot, OpenAI Codex, Gemini CLI and Cursor, that teaches the agent the workflow, safety rules and gotchas. See [AI agent plugins](agent-plugins.md) for installing it in each tool, or [Claude Code skill](claude-code.md) for Claude Code.
+[AGENTS.md](https://github.com/spacedmonkey/wrapido/blob/main/AGENTS.md) is the same guidance as the `wrapido` skill, written for the agent itself as a plain file. Credentials and headless authentication are covered in [AI agents → Credentials and a site](ai-agents.md#credentials-and-a-site).

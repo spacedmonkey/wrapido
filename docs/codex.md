@@ -41,7 +41,7 @@ Agent mode switches on by itself inside Codex, so there is nothing to configure.
 
 ## 4. Credentials and a site
 
-Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Codex, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agent plugins → Credentials and a site](agent-plugins.md#credentials-and-a-site), including the warning about `wrapido.yml` in cloned repositories.
+Export `WP_USERNAME`/`WP_PASSWORD` (an [Application Password](authentication-application-passwords.md)) before starting Codex, and put `url: https://example.com` in a `wrapido.yml` in your project. See [AI agents → Credentials and a site](ai-agents.md#credentials-and-a-site), including the warning about `wrapido.yml` in cloned repositories.
 
 Codex runs commands in a sandbox. If `wrapido` can't reach your site, allow network access for the session (see Codex's sandbox and approval settings).
 

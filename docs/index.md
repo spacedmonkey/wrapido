@@ -56,7 +56,7 @@ See [Installation](installation.md) for development setup, [Usage](usage.md) for
 - **CRUD verbs** — `list`/`get`/`create`/`update`/`delete`/`exists`/`generate`, mirroring WP-CLI's own resource commands but generically, for any namespace (core or plugin).
 - **Meta commands** — `wrapido <namespace> <route> meta <add|update|get|list|delete|patch|pluck|clean-duplicates>`, mapped onto the REST API's `meta` object field.
 - **Output formats** — `table` (default), `json`, `csv`, `yaml`, `ids`, `count`, `raw`, with `--fields=`/`--field=` selection.
-- **Agent mode** — `WRAPIDO_AGENT=1` gives AI agents and scripts plain, compact JSON output, JSON errors and unknown-flag warnings, with no change for interactive use. See [Agent mode](agent-mode.md).
+- **AI agents** — agent mode gives AI agents and scripts plain, compact JSON output, JSON errors and unknown-flag warnings, with no change for interactive use, and the `wrapido` skill ships as a plugin for Claude Code, Copilot, Codex, Gemini CLI and Cursor. See [AI agents](ai-agents.md).
 - **Authentication** — HTTP Basic Auth via WordPress core Application Passwords, or OAuth2 via the [WP-API/OAuth2](https://github.com/WP-API/OAuth2) plugin (browser flow, `client_credentials`, or a personal access token) — or plain `--username`/`--password` / `WP_USERNAME`/`WP_PASSWORD`. See [Authentication](authentication.md).
 
 ## Project links
