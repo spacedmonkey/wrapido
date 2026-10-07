@@ -1261,6 +1261,44 @@ async function getRouteSchema(
 }
 
 /**
+ * `get` has no collection-level schema to validate against (see
+ * `COLLECTION_VERB_METHOD`), so their query fields are normally forwarded as
+ * raw strings. An object-typed query arg still has to arrive as an object —
+ * the Abilities API's `input` on `abilities/<name>/run`, for one — so when a
+ * value looks like JSON, the route's GET schema is fetched purely to drive
+ * `coerceJsonFields`. A plain `get` with ordinary scalar fields pays nothing.
+ * @param client      The REST client to issue the schema request with.
+ * @param apiRoot     The resolved REST API root URL.
+ * @param namespace   The route's namespace.
+ * @param route       The route name.
+ * @param fields      The parsed `field=value` arguments.
+ * @param showSpinner Whether to show progress spinners for the schema request.
+ * @return The route's GET arg schema when a field needs coercion, else undefined.
+ */
+async function jsonCoercionArgsForGet(
+	client: WpRestClient,
+	apiRoot: string,
+	namespace: string,
+	route: string,
+	fields: Record< string, string >,
+	showSpinner: boolean
+): Promise< Record< string, EndpointArgSchema > | undefined > {
+	if ( ! Object.values( fields ).some( ( v ) => /^\s*[[{]/.test( v ) ) ) {
+		return undefined;
+	}
+	const { schema } = await getRouteSchema(
+		client,
+		apiRoot,
+		namespace,
+		route,
+		showSpinner
+	);
+	return ( schema.endpoints ?? [] ).find( ( e ) =>
+		e.methods.includes( 'GET' )
+	)?.args;
+}
+
+/**
  * Looks up where a route's URL parameter belongs (see `resolveRouteInfo`),
  * for verbs that are about to splice an `<id>` into the route. Requires a
  * fresh index fetch — unlike `getRouteSchema`, there's no schema to cache
@@ -2729,9 +2767,21 @@ export async function runRestCommand(
 					args: verbArgs,
 				} )
 			: undefined;
+	const coercionArgs =
+		verbArgs ??
+		( parsed.verb === 'get'
+			? await jsonCoercionArgsForGet(
+					client,
+					apiRoot,
+					parsed.namespace,
+					parsed.route,
+					parsed.fields,
+					! flags.quiet
+				)
+			: undefined );
 	const requestFields = coerceJsonFields(
 		uploadPlan ? uploadPlan.textFields : parsed.fields,
-		verbArgs
+		coercionArgs
 	);
 	const ids = parsed.ids ?? [];
 	if (

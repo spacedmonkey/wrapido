@@ -142,6 +142,23 @@ describe( 'ids containing a slash (Abilities API names)', () => {
 		} );
 	} );
 
+	it( 'runs an ability through its mid-path-parameter run route, passing input as query args', async () => {
+		const result = await run( [
+			'wp/v2',
+			'abilities',
+			'run',
+			'get',
+			'core/get-site-info',
+			'--input={"fields":["name"]}',
+			'--format=json',
+		] );
+		expect( result.exitCode ).toBe( 0 );
+		expect( JSON.parse( result.stdout ) ).toEqual( {
+			name: 'Fixture',
+			requested: 'name',
+		} );
+	} );
+
 	it( 'exits 0 from exists for a slash-containing id', async () => {
 		const result = await run( [
 			'wp/v2',

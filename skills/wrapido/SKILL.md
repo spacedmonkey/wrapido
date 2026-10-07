@@ -176,5 +176,6 @@ wrapido wp/v2 media create --file=./a.jpg --file=./b.png --format=ids    # batch
 - Heed stderr: `Warning: --per-page is not a declared arg ... did you mean --per_page?` means an argument was ignored, so the result may not be what you asked for.
 - Exit code is `1` on any failure. `exists` exits `1` with `{"exists":false}` on stdout when the item is not found.
 - Nested routes are separate words: `wrapido wp/v2 posts revisions get <post-id>`.
+- Ids may contain slashes (`core/get-site-info`, `twentytwentyfive//home`); pass them unchanged. Read-only abilities run with `wrapido wp-abilities/v1 abilities run get <name> --input='{...}'`; abilities needing `POST` can't be run yet.
 - Meta only works for keys registered with `show_in_rest`. Values are parsed as JSON first (`42`, `true`, `["a"]`), else treated as strings.
 - `update` shows the `create` schema in help (WordPress exposes no separate PUT schema), so partial updates are fine.
