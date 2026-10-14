@@ -35,6 +35,17 @@
 		]
 	},
 	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "ExitPlanMode",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/plan-review-gate.mjs\""
+					}
+				]
+			}
+		],
 		"PostToolUse": [
 			{
 				"matcher": "ExitPlanMode",
