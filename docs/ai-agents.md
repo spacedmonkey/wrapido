@@ -9,6 +9,7 @@ tags:
 
 AI coding agents (Claude Code, GitHub Copilot, OpenAI Codex, Gemini CLI, Cursor and others) can use `wrapido` to explore a WordPress site's REST API and build content with it. Two pieces make that work, and they're independent:
 
+<!-- markdownlint-disable MD033 -->
 <div class="grid cards" markdown>
 
 -   **[Agent mode](agent-mode.md)**
@@ -20,6 +21,7 @@ AI coding agents (Claude Code, GitHub Copilot, OpenAI Codex, Gemini CLI, Cursor 
     Change what the agent _knows_. The `wrapido` skill, packaged as a plugin for Claude Code, GitHub Copilot, OpenAI Codex, Gemini CLI and Cursor, teaches the agent the workflow, the safety rules and the common gotchas.
 
 </div>
+<!-- markdownlint-enable MD033 -->
 
 ## Get started
 
