@@ -104,6 +104,13 @@ conventions), and keeping it up to date is part of any architectural change.
   requesting review.
 - If your change affects behavior or architecture, update `CLAUDE.md` and/or `README.md` alongside the
   code change, not as a follow-up.
+- Open (or find) an issue first; name the branch after it (`feat/<issue>`, `fixes/<issue>`, `docs/<issue>`,
+  ...) and put `Fixes #<issue>` in the PR description.
+- Commit messages and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/)
+  (`feat: ...`, `fix(auth): ...`, `docs: ...`).
+- Labels are defined in [`.github/labels.yml`](.github/labels.yml) (synced by CI): one type label plus any
+  matching `area: *` labels. Milestones are release versions (`0.1.0`, `0.2.0`, ...); close a milestone
+  when its `v<version>` tag is pushed.
 
 ## Reporting bugs and requesting features
 

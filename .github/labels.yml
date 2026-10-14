@@ -1,0 +1,44 @@
+# New labels only - existing GitHub/dependabot labels are left untouched
+# (the sync runs with delete-other-labels: false). Synced by workflows/labels.yml.
+- name: chore
+  color: 'c5def5'
+  description: Maintenance that doesn't change behaviour
+- name: refactor
+  color: 'd4c5f9'
+  description: Code change that neither fixes a bug nor adds a feature
+- name: test
+  color: 'bfd4f2'
+  description: Adds or changes tests only
+- name: ci
+  color: '1d76db'
+  description: CI workflows and build tooling
+- name: experimental
+  color: 'fbca04'
+  description: Opt-in behind WRAPIDO_EXPERIMENTAL
+- name: 'area: auth'
+  color: '0e8a16'
+  description: Application Passwords, OAuth2, credential store
+- name: 'area: meta'
+  color: '0e8a16'
+  description: meta subcommands
+- name: 'area: batch'
+  color: '0e8a16'
+  description: /batch/v1 and multi-id commands
+- name: 'area: uploads'
+  color: '0e8a16'
+  description: File uploads and downloads
+- name: 'area: help'
+  color: '0e8a16'
+  description: Help output and route introspection
+- name: 'area: agent-mode'
+  color: '0e8a16'
+  description: Agent mode and machine-readable output
+- name: 'area: discovery'
+  color: '0e8a16'
+  description: REST API discovery and route indexing
+- name: 'area: formatter'
+  color: '0e8a16'
+  description: --format/--fields output rendering
+- name: 'area: config'
+  color: '0e8a16'
+  description: Config files and the settings store
