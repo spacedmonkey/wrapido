@@ -563,8 +563,12 @@ export async function startFixture(): Promise< Fixture > {
 		if ( url.searchParams.has( '_envelope' ) ) {
 			enveloped.add( res );
 		}
-		// `?slow=<ms>` delays any response, for exercising --timeout.
-		const slowMs = Number( url.searchParams.get( 'slow' ) );
+		// `?slow=<ms>` delays any response, for exercising --timeout. Capped so a
+		// stray value can't hold a request open indefinitely.
+		const slowMs = Math.min(
+			Number( url.searchParams.get( 'slow' ) ),
+			10_000
+		);
 		if ( slowMs > 0 ) {
 			await new Promise( ( resolve ) => setTimeout( resolve, slowMs ) );
 		}
