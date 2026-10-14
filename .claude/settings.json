@@ -25,7 +25,13 @@
 			"Bash(git add -A)",
 			"Bash(git commit *)",
 			"Bash(git push -u origin HEAD)",
-			"Bash(npm test)"
+			"Bash(npm test)",
+			"Bash(gh pr view *)",
+			"Bash(gh run list *)",
+			"Bash(gh run view *)",
+			"Bash(gh run watch *)",
+			"Bash(gh run rerun *)",
+			"Bash(git push)"
 		]
 	},
 	"hooks": {
@@ -36,6 +42,15 @@
 					{
 						"type": "command",
 						"command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"Plan approved. Invoke the ship-issue skill now: first file this plan as a GitHub issue (step 0), then implement it. Skip only if the plan or user said no issue.\"}}'"
+					}
+				]
+			},
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/ci-watch-on-push.mjs\""
 					}
 				]
 			}
