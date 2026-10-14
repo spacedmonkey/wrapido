@@ -12,7 +12,33 @@
 			"Bash(npm run test:unit)",
 			"Bash(npm run lint:pkg-json)",
 			"Bash(npx eslint .)",
-			"Bash(npm run lint:md:docs)"
+			"Bash(npm run lint:md:docs)",
+			"Bash(gh issue create *)",
+			"Bash(gh issue view *)",
+			"Bash(gh pr create *)",
+			"Bash(gh pr list *)",
+			"Bash(gh pr checks *)",
+			"Bash(gh label list *)",
+			"Bash(gh api repos/{owner}/{repo}/milestones --jq *)",
+			"Bash(git fetch *)",
+			"Bash(git switch --no-track -c *)",
+			"Bash(git add -A)",
+			"Bash(git commit *)",
+			"Bash(git push -u origin HEAD)",
+			"Bash(npm test)"
+		]
+	},
+	"hooks": {
+		"PostToolUse": [
+			{
+				"matcher": "ExitPlanMode",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"Plan approved. Invoke the ship-issue skill now: first file this plan as a GitHub issue (step 0), then implement it. Skip only if the plan or user said no issue.\"}}'"
+					}
+				]
+			}
 		]
 	}
 }

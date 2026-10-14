@@ -37,6 +37,15 @@ This project follows WordPress/Gutenberg JavaScript coding standards, enforced v
 -   `.prettierignore` excludes `.github/`, `*.yml`/`*.yaml`, and `mkdocs.yml` — the WordPress formatting/tab-indent rules apply to this project's JS/TS/JSON, not to CI workflow or docs-site YAML.
 -   JSDoc is required on functions (`jsdoc/require-param` etc., from the WordPress config) — see the existing `src/` files for the expected style (a one-line summary, `@param`/`@return` with real descriptions, not bare tags).
 
+## Workflow
+
+Work happens in the open, issue first:
+
+-   **Planning** a feature/fix: also ask which milestone it belongs to (default: the lowest open `X.Y.Z` milestone), and note the type/`area: *` labels in the plan.
+-   **Once a plan is approved**, a `PostToolUse` hook on `ExitPlanMode` (`.claude/settings.json`) triggers the `ship-issue` skill (`.claude/skills/ship-issue/`): it files the plan as a GitHub issue, branches `feat/<N>`/`fixes/<N>`/`<type>/<N>` from `origin/main`, implements, runs checks and the `code-reviewer` agent, commits with Conventional Commits, and opens a ready PR whose body starts `Fixes #<N>` and explains how it fixes the issue. Never merge, force-push, or commit on `main`.
+-   **Labels** live in `.github/labels.yml` (new labels only; synced by `.github/workflows/labels.yml`, never deleting others). **Milestones** are release versions without a `v` (`0.1.0`, `0.2.0`, ...); release tags keep the `v`.
+-   **Experimental features** are opt-in via the `WRAPIDO_EXPERIMENTAL` env var only (comma-separated names, or `all`; no flag or YAML key). The first one adds an `isExperimental( name )` helper next to `agentMode()` in `src/ui.ts`, read at the point of use. Off = byte-for-byte unchanged output; on = one stderr `notice()` naming the experiment, and any JSON help/introspection it adds carries `"experimental": true`. Unknown names are ignored (so stale env values don't break after graduation). Label the issue/PR `experimental`, test both env states, and list it in `docs/experimental.md` (create with the first one). Graduating = a follow-up issue removing the check.
+
 ## Architecture
 
 ### Agent mode (design rule for every new feature)
