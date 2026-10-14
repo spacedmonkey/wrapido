@@ -80,9 +80,7 @@ Fill the body from `.github/PULL_REQUEST_TEMPLATE.md`:
 
 ## 8. Wait for CI
 
-1. Run `gh pr checks --watch`.
-2. If a check fails, push one round of fixes, using steps 4–6 again.
-3. Report the PR URL and the final check status.
+`gh pr create` fires a hook that starts the `fix-ci` skill (`.claude/skills/fix-ci/`). Follow it until the checks are green or it hits a cap, then report the PR URL and the final check status.
 
 ## Never
 
