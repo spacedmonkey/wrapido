@@ -18,11 +18,13 @@ try {
 }
 
 // Only a real command (start of line or after ;, &, |), not text inside a
-// string, and not a dry run or help.
-if (
-	/(^|[;&|]\s*)(git\s+push|gh\s+pr\s+create)\b/m.test( command ) &&
-	! /\s(--dry-run|-n|--help|-h)\b/.test( command )
-) {
+// string, and not a dry run or help. Flags are read from that command's own
+// arguments only, so a heredoc body mentioning --dry-run doesn't count.
+const match =
+	/(?:^|[;&|]\s*)(?:git\s+push|gh\s+pr\s+create)\b([^;&|\n]*)/m.exec(
+		command
+	);
+if ( match && ! /\s(--dry-run|-n|--help|-h)\b/.test( match[ 1 ] ) ) {
 	process.stdout.write(
 		JSON.stringify( {
 			hookSpecificOutput: {
