@@ -1,5 +1,5 @@
 {
 	"name": "wrapido",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Teach AI coding agents to use the wrapido CLI to read and change WordPress content through the REST API."
 }

@@ -1,6 +1,6 @@
 {
 	"name": "wrapido",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "WordPress REST API Doer: a fast CLI for any WordPress site.",
 	"author": "Spacedmonkey (https://www.spacedmonkey.com)",
 	"license": "MIT",
