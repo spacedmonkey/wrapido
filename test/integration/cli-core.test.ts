@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -828,6 +828,30 @@ describe( 'YAML config files', () => {
 		const result = await runIn( [ 'config', 'get' ] );
 		expect( result.stdout ).toContain( `timeout: 5000` );
 		expect( result.stdout ).toContain( `from ${ file }` );
+	} );
+} );
+
+describe( 'version', () => {
+	const { version } = JSON.parse(
+		readFileSync( new URL( '../../package.json', import.meta.url ), 'utf8' )
+	);
+
+	it( 'prints the package version with no site configured', async () => {
+		const result = await runCli( [ 'version' ] );
+		expect( result.exitCode ).toBe( 0 );
+		expect( result.stdout ).toBe( version );
+	} );
+
+	it( 'prints JSON with --format=json', async () => {
+		const result = await runCli( [ 'version', '--format=json' ] );
+		expect( JSON.parse( result.stdout ) ).toEqual( { version } );
+	} );
+
+	it( 'prints JSON in agent mode', async () => {
+		const result = await runCli( [ 'version' ], {
+			env: { WRAPIDO_AGENT: '1' },
+		} );
+		expect( JSON.parse( result.stdout ) ).toEqual( { version } );
 	} );
 } );
 

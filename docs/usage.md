@@ -24,6 +24,7 @@ wrapido <namespace> <route> generate    [--count=<n>] [--field=value...]
 wrapido <namespace> <route> meta <add|clean-duplicates|delete|get|list|patch|pluck|update> ...
 wrapido help [<namespace> [<route...> [<verb>]]]                # same shapes, but never performs the request
 wrapido config get|set|clear
+wrapido version                                                 # print the installed wrapido version
 ```
 
 -   `list`/`create`/`generate` don't take an `<id>` — everything after the verb is treated as `field=value` pairs.

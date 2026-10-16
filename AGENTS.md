@@ -79,6 +79,7 @@ Tips for fewer calls:
 -   `list --format=count` prints the site total (`X-WP-Total`) when sent, else the rows returned. Default `--per_page` is 10 (the route's max, usually 100), newest first. When more pages exist, stderr says `Page 1 of N (T total)`; use `--page=N`, or `--per_page=-1` to get every page in one go (it ignores `--page`, and count never needs it).
 -   Several ids (or `generate --count`): stdout gets every item that succeeded (a JSON array). Each failure is one JSON line on stderr, e.g. `{"error":{...},"id":"99"}` (`"index":N` for `generate`), then `{"not_sent":[...]}`, and the exit code is `1`. `"outcome":"unknown"` means a batch timed out or 5xx'd and those items **may or may not exist**: check with `list`/`get` before retrying, never blindly resend creates. `"outcome":"sent_individually"` is informational: the site refused batching, so wrapido sent the items one by one.
 -   `exists <id>` exits `1` for "not found" and still prints `{"exists":false}` on stdout. An unknown route or namespace exits `1` with `No such route`/`No such namespace` (a JSON error in agent mode).
+-   `wrapido version` prints `{"version":"..."}` (no site needed).
 -   `--format=raw` is Node-inspect text, not JSON.
 -   `wp/v2 settings` has no item route: read with `list`, change with `create --<setting>=...`.
 -   Nested routes are separate words: `wrapido wp/v2 posts revisions get <post-id>`.
