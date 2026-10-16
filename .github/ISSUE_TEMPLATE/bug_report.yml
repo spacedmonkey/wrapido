@@ -42,7 +42,7 @@ body:
     attributes:
       label: wrapido version
       description: Output of `wrapido --version` (or the npm package version you installed).
-      placeholder: "0.1.0"
+      placeholder: "e.g. 1.2.3"
     validations:
       required: true
 
