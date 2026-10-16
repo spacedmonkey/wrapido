@@ -6,13 +6,28 @@ tags:
 
 # Installation
 
-`wrapido` isn't published to the npm registry yet (see the note at the bottom of this page), so install it from source.
-
 ## Requirements
 
 - Node.js `>= 20`
 
-## Build and run
+## Install from npm
+
+```sh
+npm install -g wrapido
+wrapido --help
+```
+
+Or run it without installing:
+
+```sh
+npx wrapido --help
+```
+
+Update with `npm install -g wrapido@latest`, and remove it with `npm uninstall -g wrapido`.
+
+## Install from source
+
+Build and run:
 
 ```sh
 git clone https://github.com/spacedmonkey/wrapido.git
@@ -27,9 +42,9 @@ This bundles the CLI to `dist/cli.js` (via [tsup](https://tsup.egoist.dev/)), wh
 ./dist/cli.js <namespace> <route> [<verb>] [<id>] [--flag=value...] --url=<site>
 ```
 
-## Install globally
+### Install globally from source
 
-To use the `wrapido` command from anywhere, instead of running it from inside the cloned repo:
+To use a source build as the `wrapido` command from anywhere, instead of running it from inside the cloned repo:
 
 ```sh
 git clone https://github.com/spacedmonkey/wrapido.git
@@ -99,13 +114,3 @@ See [CONTRIBUTING.md](https://github.com/spacedmonkey/wrapido/blob/main/CONTRIBU
 ## Use it with Claude Code
 
 Once `wrapido` is on your `PATH`, you can install the `wrapido` skill so your AI coding agent knows how to use it. See [AI agents](ai-agents.md).
-
-## Note on npm registry publishing
-
-`wrapido` isn't published to the npm registry yet. Once it is, global installation will collapse to a single command:
-
-```sh
-npm install -g wrapido
-```
-
-Until then, use the from-source steps under [Install globally](#install-globally) above.

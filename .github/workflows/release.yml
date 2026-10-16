@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # npm trusted publishing (OIDC): no NPM_TOKEN, provenance is automatic.
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -18,14 +20,23 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 20.x
+          # Trusted publishing needs npm >= 11.5.1; Node 20 ships npm 10.
+          # Only the release runner uses 24 — `engines` stays `>=20`.
+          node-version: 24.x
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Tag matches package.json version
+        run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
+
       - name: Lint
         run: npm run lint
+
+      - name: Check agent plugin manifests are in sync
+        run: npm run check:plugins
 
       - name: Typecheck
         run: npm run typecheck
@@ -33,22 +44,25 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Build
-        run: npm run build
-
+      # `prepack` runs `npm run build`.
       - name: Pack npm tarball
         run: npm pack
+
+      # Uses the npm trusted publisher configured for this workflow on
+      # npmjs.com. Skips a version that's already on the registry (e.g. a
+      # manual first publish, or a re-run of this job). Runs before the GitHub
+      # Release, so a failed publish never leaves a release without a package.
+      - name: Publish to npm
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if npm view "wrapido@${version}" version >/dev/null 2>&1; then
+            echo "wrapido@${version} is already on npm, skipping."
+          else
+            npm publish ./wrapido-*.tgz
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           files: '*.tgz'
-
-      # Publishing to the npm registry is disabled for now. To turn it on,
-      # remove `if: false` and set an `NPM_TOKEN` secret in the repo settings.
-      - name: Publish to npm
-        if: false
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

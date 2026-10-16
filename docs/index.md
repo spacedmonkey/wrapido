@@ -32,22 +32,19 @@ WP-CLI itself needs PHP, SSH access, and a local WordPress install to run agains
 ## Quick start
 
 ```sh
-git clone https://github.com/spacedmonkey/wrapido.git
-cd wrapido
-npm install
-npm run build
+npm install -g wrapido
 
 # Discover a site's REST API
-./dist/cli.js --url=https://example.com
+wrapido --url=https://example.com
 
 # List routes in a namespace
-./dist/cli.js wp/v2 --url=https://example.com
+wrapido wp/v2 --url=https://example.com
 
 # List posts as JSON
-./dist/cli.js wp/v2 posts list --per_page=5 --format=json --url=https://example.com
+wrapido wp/v2 posts list --per_page=5 --format=json --url=https://example.com
 ```
 
-See [Installation](installation.md) for development setup, [Usage](usage.md) for the full command grammar, and [Examples](examples.md) for more.
+See [Installation](installation.md) for `npx` and building from source, [Usage](usage.md) for the full command grammar, and [Examples](examples.md) for more.
 
 ## What it can do
 
