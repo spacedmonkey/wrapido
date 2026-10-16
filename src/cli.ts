@@ -3,6 +3,7 @@
  */
 import { Command } from 'commander';
 import process from 'node:process';
+import { stringify as stringifyYaml } from 'yaml';
 
 /**
  * Internal dependencies
@@ -566,10 +567,13 @@ run "wrapido <namespace> <route>" to see which ones a given route supports.
 			setTruncateLength( parseTruncateLength( options.truncateLength ) );
 			setDebugOutput( Boolean( options.debug ) );
 			if ( args[ 0 ] === 'version' ) {
+				const versionText = {
+					json: () => JSON.stringify( { version: pkg.version } ),
+					yaml: () =>
+						stringifyYaml( { version: pkg.version } ).trimEnd(),
+				}[ options.format as string ];
 				await printOutput(
-					options.format === 'json'
-						? JSON.stringify( { version: pkg.version } )
-						: pkg.version,
+					versionText ? versionText() : pkg.version,
 					toPagerFlags( options )
 				);
 				process.exitCode = 0;

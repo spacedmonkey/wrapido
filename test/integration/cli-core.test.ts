@@ -847,6 +847,11 @@ describe( 'version', () => {
 		expect( JSON.parse( result.stdout ) ).toEqual( { version } );
 	} );
 
+	it( 'prints YAML with --format=yaml', async () => {
+		const result = await runCli( [ 'version', '--format=yaml' ] );
+		expect( result.stdout ).toBe( `version: ${ version }` );
+	} );
+
 	it( 'prints JSON in agent mode', async () => {
 		const result = await runCli( [ 'version' ], {
 			env: { WRAPIDO_AGENT: '1' },
