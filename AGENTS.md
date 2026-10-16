@@ -82,6 +82,7 @@ Tips for fewer calls:
 -   `--format=raw` is Node-inspect text, not JSON.
 -   `wp/v2 settings` has no item route: read with `list`, change with `create --<setting>=...`.
 -   Nested routes are separate words: `wrapido wp/v2 posts revisions get <post-id>`.
+-   Ids may contain slashes (`core/get-site-info`, `twentytwentyfive//home`); pass them unchanged. Read-only abilities run with `wrapido wp-abilities/v1 abilities run get <name> --input='{...}'`; abilities needing `POST` can't be run yet.
 -   `types`, `taxonomies`, `statuses` list one row per entry, so `--fields=slug,name` works.
 -   Uploads: the flag is the endpoint's own parameter name: `wrapido wp/v2 media create --file=./img.png --alt_text=...` (a path or `http(s)://` URL; repeat `--file` for a batch). Featured image: upload, then `posts update <id> --featured_media=<media-id>`. Needs `upload_files`.
 -   `--debug` logs every HTTP request (credentials redacted) to stderr.

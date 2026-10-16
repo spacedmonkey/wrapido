@@ -4,6 +4,7 @@
 import type { WpRestClient } from '../core/client.js';
 import { CliError } from '../core/errors.js';
 import { formatOutput } from '../core/formatter.js';
+import { encodePathParam } from '../core/indexer.js';
 import type { GlobalFlags, RouteEndpoint } from '../types.js';
 import { pc } from '../ui.js';
 
@@ -487,7 +488,7 @@ async function getItem(
 	context: GlobalFlags[ 'context' ]
 ): Promise< Record< string, unknown > > {
 	const url = new URL(
-		`${ namespace }/${ route }/${ encodeURIComponent( id ) }`,
+		`${ namespace }/${ route }/${ encodePathParam( id ) }`,
 		apiRoot
 	).toString();
 	const { body } = await client.request< Record< string, unknown > >( url, {
@@ -517,7 +518,7 @@ async function patchMeta(
 	meta: Record< string, unknown >
 ): Promise< Record< string, unknown > > {
 	const url = new URL(
-		`${ namespace }/${ route }/${ encodeURIComponent( id ) }`,
+		`${ namespace }/${ route }/${ encodePathParam( id ) }`,
 		apiRoot
 	).toString();
 	const { body } = await client.request< Record< string, unknown > >( url, {

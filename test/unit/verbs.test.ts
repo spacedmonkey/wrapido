@@ -138,6 +138,22 @@ describe( 'buildVerbRequest', () => {
 		);
 	} );
 
+	it( 'keeps a slash in the id literal (an Abilities API name), encoding only what is around it', () => {
+		const req = buildVerbRequest( {
+			verb: 'get',
+			apiRoot,
+			namespace: 'wp-abilities/v1',
+			route: 'abilities/run',
+			id: 'core/get site-info',
+			paramIndex: 1,
+			context: 'view',
+			fields: {},
+		} );
+		expect( req.url ).toBe(
+			'https://example.com/wp-json/wp-abilities/v1/abilities/core/get%20site-info/run?context=view'
+		);
+	} );
+
 	it( 'builds a DELETE request with query fields (e.g. force)', () => {
 		const req = buildVerbRequest( {
 			verb: 'delete',

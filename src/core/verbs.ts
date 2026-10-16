@@ -7,6 +7,7 @@ import { addQueryArgs } from '@wordpress/url';
  * Internal dependencies
  */
 import { CliError } from './errors.js';
+import { encodePathParam } from './indexer.js';
 import type { Context, Verb } from '../types.js';
 
 export interface VerbRequest {
@@ -89,12 +90,12 @@ export function isKeyedRoute( route: string ): boolean {
  * @param route      The namespace-relative route, `/`-joined.
  * @param id         The id to splice in.
  * @param paramIndex Where within `route.split('/')` to insert it.
- * @return The route with the (URI-encoded) id inserted.
+ * @return The route with the (URI-encoded, `/` kept literal) id inserted.
  */
 function spliceId( route: string, id: string, paramIndex?: number ): string {
 	const segments = route.split( '/' );
 	const insertAt = paramIndex ?? segments.length;
-	segments.splice( insertAt, 0, encodeURIComponent( id ) );
+	segments.splice( insertAt, 0, encodePathParam( id ) );
 	return segments.join( '/' );
 }
 
