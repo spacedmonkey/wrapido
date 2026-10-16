@@ -93,7 +93,7 @@ npm run -s wrapido -- <namespace> <route> [<verb>] [<id>] [--flag=value...] --ur
 
 Two things to get right with `npm run`:
 
--   **`-s` (`--silent`):** without it, npm prints its own `> wrapido@0.1.0 wrapido` banner on stdout before wrapido's output. That breaks anything that reads the output, such as `--format=json` piped to `jq`, or ids captured with `$(…)`:
+-   **`-s` (`--silent`):** without it, npm prints its own `> wrapido@<version> wrapido` banner on stdout before wrapido's output. That breaks anything that reads the output, such as `--format=json` piped to `jq`, or ids captured with `$(…)`:
 
     ```sh
     npm run -s wrapido -- wp/v2 posts delete $(npm run -s wrapido -- wp/v2 posts list --status=draft --per_page=-1 --format=ids) --url=<site>

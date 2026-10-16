@@ -1,13 +1,21 @@
 name: Release
 
+# Publish a GitHub Release (UI or `gh release create`) with a new `vX.Y.Z`
+# tag. This sets every version file from the tag, commits that to the target
+# branch, moves the tag onto the commit, then publishes.
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  release:
+    types: [published]
+
+# One release at a time: each pushes a commit onto the target branch.
+concurrency:
+  group: release
 
 jobs:
   release:
     name: Build, verify & publish GitHub release
+    # Prereleases would publish as npm's `latest`; release them by hand.
+    if: ${{ !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -18,6 +26,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # The branch, not the tag: the version bump is committed onto it.
+          ref: ${{ github.event.release.target_commitish }}
+          fetch-depth: 0
+
+      - name: Release targets a branch
+        env:
+          TARGET: ${{ github.event.release.target_commitish }}
+        run: |
+          git ls-remote --exit-code --heads origin "$TARGET" >/dev/null || {
+            echo "::error::Release target '$TARGET' is not a branch; the version bump has to be committed onto one."
+            exit 1
+          }
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -31,8 +52,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Tag matches package.json version
-        run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
+      # .claude-plugin/plugin.json is the source sync:plugins copies into
+      # gemini-extension.json, .cursor-plugin/ and .codex-plugin/. sed, not
+      # JSON.stringify, so its inline arrays keep their formatting.
+      - name: Set version from tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          npm version "$version" --no-git-tag-version --allow-same-version
+          sed -i -E 's/^(\t"version": )"[^"]*"/\1"'"$version"'"/' .claude-plugin/plugin.json
+          npm run sync:plugins
+          # sync:plugins writes plain JSON.stringify output; restore the
+          # repo's Prettier formatting so the release commit is version-only.
+          npx prettier --write package.json gemini-extension.json .cursor-plugin .codex-plugin
+          for f in package.json package-lock.json gemini-extension.json $(git ls-files '*plugin.json'); do
+            test "$(node -p "require('./$f').version")" = "$version" || {
+              echo "::error file=$f::version is not $version"
+              exit 1
+            }
+          done
 
       - name: Lint
         run: npm run lint
@@ -50,10 +87,33 @@ jobs:
       - name: Pack npm tarball
         run: npm pack
 
+      # After every check, so a failing release never pushes or moves the tag.
+      # A GITHUB_TOKEN push doesn't trigger workflows, so this can't loop. On
+      # a re-run there's no diff, so nothing is committed, but the tag is
+      # still moved onto HEAD if an earlier run died before moving it.
+      - name: Commit version bump and move tag
+        env:
+          TARGET: ${{ github.event.release.target_commitish }}
+        run: |
+          files="package.json package-lock.json gemini-extension.json .claude-plugin .cursor-plugin .codex-plugin"
+          if git diff --quiet -- $files; then
+            echo "Version files already match ${GITHUB_REF_NAME}."
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -- $files
+            git commit -m "chore: release ${GITHUB_REF_NAME}"
+            git push origin "HEAD:refs/heads/${TARGET}"
+          fi
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse "refs/tags/${GITHUB_REF_NAME}^{commit}")" ]; then
+            git tag -f "$GITHUB_REF_NAME"
+            git push -f origin "refs/tags/${GITHUB_REF_NAME}"
+          fi
+
       # Uses the npm trusted publisher configured for this workflow on
       # npmjs.com. Skips a version that's already on the registry (e.g. a
-      # manual first publish, or a re-run of this job). Runs before the GitHub
-      # Release, so a failed publish never leaves a release without a package.
+      # manual first publish, or a re-run of this job). Runs before the
+      # tarball is attached to the release.
       - name: Publish to npm
         run: |
           version="$(node -p "require('./package.json').version")"
@@ -81,8 +141,8 @@ jobs:
             npm publish --ignore-scripts --registry="$registry"
           fi
 
-      - name: Create GitHub Release
+      - name: Attach tarball to the GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          generate_release_notes: true
+          tag_name: ${{ github.event.release.tag_name }}
           files: '*.tgz'

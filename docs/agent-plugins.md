@@ -56,7 +56,7 @@ A skill is loaded only when a request is relevant (anything about a WordPress si
 `.claude-plugin/plugin.json` is the single source of truth.
 
 - Edit only that file and `skills/`. Then run `npm run sync:plugins` to regenerate `gemini-extension.json`, `.cursor-plugin/plugin.json` and `.codex-plugin/plugin.json` from it. The Codex/Cursor-only extras (logo, example prompts) live in `scripts/sync-agent-plugins.js`.
-- Keep `version` in `.claude-plugin/plugin.json` equal to `package.json`'s, and bump it whenever the skill changes. Claude Code only offers an update when the version changes.
+- Keep `version` in `.claude-plugin/plugin.json` equal to `package.json`'s. You don't bump it by hand for a release: publishing a GitHub Release with tag `vX.Y.Z` makes `release.yml` set `package.json`, `package-lock.json` and every manifest to `X.Y.Z` and commit that. Claude Code only offers an update when the version changes.
 - CI runs `npm run check:plugins`, which fails if any of these is true:
     - a generated file is stale;
     - the two versions differ;
