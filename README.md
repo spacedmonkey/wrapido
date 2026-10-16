@@ -1,13 +1,14 @@
 <!-- markdownlint-disable MD033 MD041 -->
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-light.svg">
-    <img src=".github/assets/logo-light.svg" alt="wrapido" width="320">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/spacedmonkey/wrapido/main/.github/assets/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/spacedmonkey/wrapido/main/.github/assets/logo-light.svg">
+    <img src="https://raw.githubusercontent.com/spacedmonkey/wrapido/main/.github/assets/logo-light.svg" alt="wrapido" width="320">
   </picture>
 </p>
 <!-- markdownlint-enable MD033 MD041 -->
 
+[![npm](https://img.shields.io/npm/v/wrapido.svg)](https://www.npmjs.com/package/wrapido)
 [![CI](https://github.com/spacedmonkey/wrapido/actions/workflows/ci.yml/badge.svg)](https://github.com/spacedmonkey/wrapido/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
@@ -26,11 +27,10 @@ A WP-CLI-style command line tool for talking to **any** WordPress site's REST AP
 ## Install
 
 ```sh
-npm install
-npm run build
+npm install -g wrapido
 ```
 
-To use `wrapido` as a global command instead of running it from inside this repo, see [Install globally](https://spacedmonkey.github.io/wrapido/installation/#install-globally) in the full docs.
+Or run it without installing: `npx wrapido --help`. To build from source instead, see [Install from source](https://spacedmonkey.github.io/wrapido/installation/#install-from-source) in the full docs.
 
 For local development, run commands directly against the TypeScript source without a build step:
 
