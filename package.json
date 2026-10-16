@@ -1,6 +1,6 @@
 {
 	"name": "wrapido",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "WordPress REST API Doer: a fast CLI for any WordPress site.",
 	"author": "Spacedmonkey (https://www.spacedmonkey.com)",
 	"license": "MIT",
@@ -32,7 +32,7 @@
 	],
 	"type": "module",
 	"bin": {
-		"wrapido": "./dist/cli.js"
+		"wrapido": "dist/cli.js"
 	},
 	"dependencies": {
 		"@wordpress/url": "^4.54.0",
