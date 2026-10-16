@@ -9,7 +9,7 @@ description: Use the wrapido CLI to read and change content on any WordPress sit
 
 ## Setup checks
 
-- Run `wrapido --help` once to confirm it is installed. If missing, install it with `npm install -g wrapido` (or run `npx wrapido ...`).
+- Run `wrapido version` once to confirm it is installed (prints `{"version":"..."}`). If missing, install it with `npm install -g wrapido` (or run `npx wrapido ...`).
 - The site comes from `--url=<site>`, a `wrapido.yml` (`url: https://example.com`) in the working directory, or a saved default. Run `wrapido config get` to see what is in effect and where it came from.
 
 ## Always run in agent mode

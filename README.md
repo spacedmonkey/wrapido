@@ -51,6 +51,7 @@ wrapido <namespace> <route> get <id>
 wrapido <namespace> <route> create      [--field=value...] [--body=<json>]
 wrapido <namespace> <route> update <id> [--field=value...] [--body=<json>]
 wrapido <namespace> <route> delete <id> [--force]
+wrapido version                                                 # print the installed wrapido version (--format=json|yaml for structured output)
 ```
 
 > **TLS:** HTTPS certificates are never verified, so self-signed/expired certs on local or staging sites just work. Avoid real credentials on untrusted networks.

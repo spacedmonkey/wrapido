@@ -14,7 +14,7 @@ tags:
 
 ```sh
 npm install -g wrapido
-wrapido --help
+wrapido version   # prints the installed version, e.g. 0.1.1
 ```
 
 Or run it without installing:
@@ -66,7 +66,7 @@ npm install -g .
 `npm install -g .` uses the `bin` entry in `package.json` to link a `wrapido` command onto your `PATH`, pointing at the `dist/cli.js` you just built. Confirm it worked with:
 
 ```sh
-wrapido --help
+wrapido version
 ```
 
 To pick up later updates, `git pull` and re-run `npm run build && npm install -g .`.

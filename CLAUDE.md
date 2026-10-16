@@ -72,6 +72,7 @@ wrapido <namespace> <route> list|get|create|update|delete|exists|generate [...]
 wrapido <namespace> <route> meta <add|clean-duplicates|delete|get|list|patch|pluck|update> ...
 wrapido help [<namespace> [<route...> [<verb>]]]                # same shapes, but never performs the request
 wrapido config get|set|clear|rotate-key
+wrapido version                                                 # print the installed version (plain; {"version":...} under --format=json/yaml)
 wrapido auth <type> login|add|list|remove|use|status    # <type>: application-passwords | oauth2
 ```
 

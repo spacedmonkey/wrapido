@@ -3,10 +3,12 @@
  */
 import { Command } from 'commander';
 import process from 'node:process';
+import { stringify as stringifyYaml } from 'yaml';
 
 /**
  * Internal dependencies
  */
+import pkg from '../package.json' with { type: 'json' };
 import {
 	assertKnownAuthType,
 	authUsageText,
@@ -542,6 +544,7 @@ Examples:
   $ wrapido auth oauth2 login https://example.com --client-id=abc123
   $ wrapido auth oauth2 add https://example.com --client-id=abc123 --client-secret=xxxx
   $ wrapido config rotate-key
+  $ wrapido version
   $ wrapido help wp/v2 posts list --url=https://example.com
   $ wrapido wp/v2 posts --help --url=https://example.com
   $ wrapido wp/v2 posts create --help --url=https://example.com
@@ -563,6 +566,20 @@ run "wrapido <namespace> <route>" to see which ones a given route supports.
 			setColorEnabled( options.color && colorByDefault() );
 			setTruncateLength( parseTruncateLength( options.truncateLength ) );
 			setDebugOutput( Boolean( options.debug ) );
+			if ( args[ 0 ] === 'version' ) {
+				const versionText = {
+					json: () => JSON.stringify( { version: pkg.version } ),
+					yaml: () =>
+						stringifyYaml( { version: pkg.version } ).trimEnd(),
+				}[ options.format as string ];
+				await printOutput(
+					versionText ? versionText() : pkg.version,
+					toPagerFlags( options )
+				);
+				process.exitCode = 0;
+				return;
+			}
+
 			if ( args[ 0 ] === 'config' ) {
 				if ( options.help ) {
 					await printOutput(
