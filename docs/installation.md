@@ -25,6 +25,15 @@ npx wrapido --help
 
 Update with `npm install -g wrapido@latest`, and remove it with `npm uninstall -g wrapido`.
 
+## Install from GitHub Packages
+
+Every release is also published to GitHub Packages as `@spacedmonkey/wrapido`. GitHub's npm registry needs a [personal access token](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-with-a-personal-access-token) with `read:packages`, even for public packages:
+
+```sh
+npm login --scope=@spacedmonkey --auth-type=legacy --registry=https://npm.pkg.github.com
+npm install -g @spacedmonkey/wrapido
+```
+
 ## Install from source
 
 Build and run:

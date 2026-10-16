@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # GitHub Packages publish via GITHUB_TOKEN.
+      packages: write
       # npm trusted publishing (OIDC): no NPM_TOKEN, provenance is automatic.
       id-token: write
     steps:
@@ -59,6 +61,24 @@ jobs:
             echo "wrapido@${version} is already on npm, skipping."
           else
             npm publish ./wrapido-*.tgz
+          fi
+
+      # GitHub Packages' npm registry only takes scoped names, so the same
+      # build is republished as @spacedmonkey/wrapido. dist/ already exists
+      # from `npm pack`, hence --ignore-scripts. Runs after npm so the
+      # package.json rename can't leak into the npm tarball.
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          registry=https://npm.pkg.github.com
+          npm config set "//npm.pkg.github.com/:_authToken" '${NODE_AUTH_TOKEN}'
+          npm pkg set name=@spacedmonkey/wrapido
+          version="$(node -p "require('./package.json').version")"
+          if npm view "@spacedmonkey/wrapido@${version}" version --registry="$registry" >/dev/null 2>&1; then
+            echo "@spacedmonkey/wrapido@${version} is already on GitHub Packages, skipping."
+          else
+            npm publish --ignore-scripts --registry="$registry"
           fi
 
       - name: Create GitHub Release
