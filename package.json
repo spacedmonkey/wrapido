@@ -32,7 +32,7 @@
 	],
 	"type": "module",
 	"bin": {
-		"wrapido": "./dist/cli.js"
+		"wrapido": "dist/cli.js"
 	},
 	"dependencies": {
 		"@wordpress/url": "^4.54.0",
