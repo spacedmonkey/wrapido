@@ -2,6 +2,7 @@
  * Internal dependencies
  */
 import type { WpRestClient } from './client.js';
+import { CliError } from './errors.js';
 import type { IndexResponse, Verb } from '../types.js';
 
 /**
@@ -171,11 +172,19 @@ export function spliceParams(
  * literal. Some identifiers contain a slash by design (an Abilities API name
  * such as `core/get-site-info`, matched by `(?P<name>[a-zA-Z0-9\-\/]+)`), and
  * WordPress only matches the literal form: an encoded `%2F` is a 404.
+ * A `.`/`..` segment is rejected: URL resolution would collapse it and send
+ * the request to a different route (encoding doesn't help, `%2e%2e` is `..`).
  * @param value The parameter value.
  * @return The value, encoded segment by segment.
  */
 export function encodePathParam( value: string ): string {
-	return value.split( '/' ).map( encodeURIComponent ).join( '/' );
+	const segments = value.split( '/' );
+	if ( segments.some( ( s ) => s === '.' || s === '..' ) ) {
+		throw new CliError(
+			`Invalid id "${ value }": "." and ".." path segments are not allowed.`
+		);
+	}
+	return segments.map( encodeURIComponent ).join( '/' );
 }
 
 /**

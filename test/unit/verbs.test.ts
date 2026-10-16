@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
  * Internal dependencies
  */
 import { CliError } from '../../src/core/errors.js';
+import { encodePathParam } from '../../src/core/indexer.js';
 import { buildVerbRequest } from '../../src/core/verbs.js';
 
 const apiRoot = 'https://example.com/wp-json/';
@@ -151,6 +152,25 @@ describe( 'buildVerbRequest', () => {
 		} );
 		expect( req.url ).toBe(
 			'https://example.com/wp-json/wp-abilities/v1/abilities/core/get%20site-info/run?context=view'
+		);
+	} );
+
+	it( 'rejects . and .. id segments, which URL resolution would collapse onto another route', () => {
+		expect( () =>
+			buildVerbRequest( {
+				verb: 'delete',
+				apiRoot,
+				namespace: 'wp/v2',
+				route: 'posts',
+				id: '../users/1',
+				context: 'view',
+				fields: {},
+			} )
+		).toThrow( CliError );
+		expect( () => encodePathParam( 'a/../b' ) ).toThrow( CliError );
+		expect( () => encodePathParam( './a' ) ).toThrow( CliError );
+		expect( encodePathParam( 'twentytwentyfive//home' ) ).toBe(
+			'twentytwentyfive//home'
 		);
 	} );
 
