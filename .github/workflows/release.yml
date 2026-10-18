@@ -115,6 +115,7 @@ jobs:
       # manual first publish, or a re-run of this job). Runs before the
       # tarball is attached to the release.
       - name: Publish to npm
+        id: npm
         run: |
           version="$(node -p "require('./package.json').version")"
           if npm view "wrapido@${version}" version >/dev/null 2>&1; then
@@ -126,8 +127,11 @@ jobs:
       # GitHub Packages' npm registry only takes scoped names, so the same
       # build is republished as @spacedmonkey/wrapido. dist/ already exists
       # from `npm pack`, hence --ignore-scripts. Runs after npm so the
-      # package.json rename can't leak into the npm tarball.
+      # package.json rename can't leak into the npm tarball. Still runs if
+      # the npm publish failed, so one registry's outage doesn't block the
+      # other; the job stays red either way.
       - name: Publish to GitHub Packages
+        if: ${{ success() || steps.npm.outcome == 'failure' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -142,6 +146,7 @@ jobs:
           fi
 
       - name: Attach tarball to the GitHub Release
+        if: ${{ success() || steps.npm.outcome == 'failure' }}
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.release.tag_name }}
