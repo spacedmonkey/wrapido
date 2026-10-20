@@ -54,7 +54,7 @@
 		"@wordpress/scripts": "^36.0.0",
 		"c8": "^12.0.0",
 		"eslint-plugin-import": "^2.32.0",
-		"execa": "^9.5.2",
+		"execa": "^10.1.1",
 		"istanbul-badges-readme": "^1.9.0",
 		"prettier": "npm:wp-prettier@^3.0.3",
 		"tsup": "^8.3.5",
